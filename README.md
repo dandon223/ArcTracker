@@ -1,2 +1,16 @@
 # ArcTracker
 Simple web app used for tracking played cards in game of ARCS by Cole Wehrle
+
+
+## Documentation
+
+Documentations is written in sphinx-needs.
+To create it locally Python 3.11 is needed.
+```
+mkdir .venvs
+python3.13 -m venv .venvs/arc_tracker
+source .venvs/arc_tracker/bin/activate
+pip install -r requirements.txt
+make docs
+```
+Next open ```docs/_build/html/index.html``` file.
