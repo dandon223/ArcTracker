@@ -1,9 +1,10 @@
-ArcTracker documentation
-========================
+ArcTracker
+==========
 
 .. include:: ../README.md
     :parser: myst_parser.sphinx_
     :start-after: # ArcTracker
+    :end-before: ## Documentation
 
 
 =============
