@@ -14,3 +14,11 @@ pip install -r requirements.txt
 make docs
 ```
 Next open ```docs/_build/html/index.html``` file.
+
+## Backend
+Backend was written in Django
+To run it locally perform this steps:
+```
+cd backend
+python manage.py runserver
+```
