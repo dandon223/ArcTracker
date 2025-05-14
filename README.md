@@ -22,3 +22,8 @@ To run it locally perform this steps:
 cd backend
 python manage.py runserver
 ```
+To upload changes to model run:
+```
+python manage.py makemigrations
+python manage.py migrate
+```
