@@ -29,7 +29,7 @@ Card counting during game
     :id: SPEC_005
     :status: open
 
-    ArcTracker shall allow user to match played maximum one `face up` card to player name in during round.
+    ArcTracker shall allow user to match played maximum one `face up` card to player name during round.
 
 .. spec:: Mark played face down card
     :id: SPEC_006

@@ -11,7 +11,7 @@ copyright = "ArcTracker Project"
 author = "Daniel Górniak"
 release = "v0.1"
 
-extensions = ["sphinx_needs", "myst_parser"]
+extensions = ["sphinx_needs", "myst_parser", "sphinxcontrib.plantuml"]
 
 html_theme = "furo"
 html_static_path = []

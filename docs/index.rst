@@ -19,4 +19,4 @@ Docs contents
    requirements
    specifications/index
    metrics/index
-
+   database_class_diagram
