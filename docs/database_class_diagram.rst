@@ -36,8 +36,6 @@ Database class diagram
 
       class Player {
         - uuid: UUID
-        + name: string
-        + surname: string
         + nick: string
         + create_time: Date
       }
