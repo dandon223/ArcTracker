@@ -124,8 +124,28 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
                 images_tmp.append(suit_name + "/" + number_value + ".jpg")
         rows_images.append(images_tmp)
 
+
+    cards_played_in_chapter = []
+    for player in game_object.players.all():
+        cards_played_in_chapter.append(player.nick)
+        for i in range(1, game_round + 1):
+            game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
+            if CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).exists():
+                card_played_in_round_object = CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).get()
+                cards_played_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
+
+    cards_retrieved_in_chapter = []
+    for player in game_object.players.all():
+        cards_retrieved_in_chapter.append(player.nick)
+        for i in range(1, game_round + 1):
+            game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
+            if CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).exists():
+                card_played_in_round_object = CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).get()
+                cards_retrieved_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
+
     return render(request, "game.html", {"name": game_object.name,
-                                         "players": game_object.players.all(),
+                                         "cards_played": cards_played_in_chapter,
+                                         "cards_retrieved": cards_retrieved_in_chapter,
                                          "rows_images": rows_images,
                                          "game_chapter": game_chapter,
                                          "game_round": game_round,
