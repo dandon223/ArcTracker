@@ -55,10 +55,14 @@ Database class diagram
       Player "1" -- "*" PlayerInGame
       Game "1" -- "*" PlayerInGame
 
+      class GameRound {
+        - game_uuid: PlayerInGame.uuid
+        - chapter: Integer
+        - round: Integer
+      }
+
       class CardsPlayedInGame {
         - player_uuid: PlayerInGame.uuid
-        - game_uuid: PlayerInGame.uuid
-        + round_played: Integer
         + card_suit_played: Card.suit
         + card_number_played: Card.number
         + card_face_down: bool

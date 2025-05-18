@@ -6,6 +6,57 @@
     <title>Game</title>
 </head>
 <body>
-    <h1>Game: {{ name }}</h1>
+    <h1>Game: {{ name }}, Chapter: {{ game_chapter }}, Round: {{ game_round }}</h1>
+<hr>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" name="submit_type" value="new_chapter">New chapter</button>
+</form>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" name="submit_type" value="new_round">New round</button>
+</form>
+<hr>
+<div>
+    <h2>Players:</h2>
+    {% for player in players %}
+    <b>{{ player }}</b><br />
+    {% endfor %}
+</div>
+<hr>
+{% load static %}
+
+<style>
+  .row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .row img {
+    width: 150px;
+    height: auto;
+    border: 1px solid #ccc;
+  }
+</style>
+<h2>Cards in play:</h2>
+{% for row_images in rows_images %}
+  <div class="row">
+    {% for img in row_images %}
+      <img src="{% static 'action_cards/'|add:img %}" alt="{{ img }}">
+    {% endfor %}
+  </div>
+{% endfor %}
+<hr>
+    <form method="POST">
+        {% csrf_token %}
+        {{ card_played_in_round_form.as_p }}
+        <button type="submit" name="submit_type" value="card_played">Add card played in round</button>
+    </form>
+<hr>
+    <form method="POST">
+        {% csrf_token %}
+        {{ card_retrived_in_round_form.as_p }}
+        <button type="submit" name="submit_type" value="card_retrieved">Add card retrieved in round</button>
+    </form>
 </body>
 </html>

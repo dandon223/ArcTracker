@@ -21,6 +21,13 @@ class CardNumber(models.TextChoices):
     SIX = "SIX"
     SEVEN = "SEVEN"
 
+class Card(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    suit = models.CharField(max_length=20, choices=CardSuit.choices)
+    number = models.CharField(max_length=20, choices=CardNumber.choices)
+    def __str__(self) -> str:
+        return self.suit + "." + self.number
+
 class Player(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nick = models.CharField(max_length=256)
@@ -37,3 +44,26 @@ class Game(models.Model):
 
     def __str__(self) -> str:
         return "Name: " + str(self.name) +" Players: " + str([player.nick for player in self.players.all()])
+
+class GameRound(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    chapter = models.IntegerField()
+    round = models.IntegerField()
+    class Meta:
+        unique_together = ('game','chapter', 'round')
+
+class CardPlayedInRound(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    game_round = models.ForeignKey(GameRound, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE)
+    card_face_down = models.BooleanField()
+    class Meta:
+        unique_together = ('player', 'game_round')
+
+class CardRetrievedInRound(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    game_round = models.ForeignKey(GameRound, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE)
