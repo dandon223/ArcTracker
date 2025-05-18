@@ -18,6 +18,13 @@
 </form>
 <hr>
 <div>
+    <h2>Cards In Hand:</h2>
+    {% for player, value in cards_in_hand %}
+    <b>{{ player }} : {{ value }}</b><br />
+    {% endfor %}
+</div>
+<hr>
+<div>
     <h2>Cards Played:</h2>
     {% for player in cards_played %}
     <b>{{ player }}</b><br />
