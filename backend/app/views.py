@@ -50,11 +50,14 @@ def games(request: HttpRequest) -> HttpResponse:
     game_objects = Game.objects.all()
     return render(request, "view.html", {"name": "games", "models":game_objects})
 
-def get_cards_in_play(game_object: Game, game_chapter: int) -> Tuple[List[str], List[str]]:
+def get_cards_in_play(game_object: Game, game_chapter: int, game_round: int) -> Tuple[List[str], List[str]]:
     cards_out_of_play_tmp = {}
 
     card_by_str = {}
-    card_objects = list(Card.objects.all())
+    if len(game_object.players.all()) < 4:
+        card_objects = list(Card.objects.exclude(number__in = [CardNumber.ONE, CardNumber.SEVEN]))
+    else:
+        card_objects = list(Card.objects.all())
     for card_object in card_objects:
         card_by_str[str(card_object)] = card_object
 
@@ -68,6 +71,7 @@ def get_cards_in_play(game_object: Game, game_chapter: int) -> Tuple[List[str], 
         else:
             cards_out_of_play_tmp[key] = cards_out_of_play_tmp[key] +  1
 
+    game_round_objects = GameRound.objects.filter(game=game_object, chapter=game_chapter).exclude(round=game_round).all()
     card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(game_round__in = game_round_objects).all()
     for card_retrieved_in_round_object in card_retrieved_in_round_objects:
         key = str(card_retrieved_in_round_object.card)
@@ -83,8 +87,8 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
         return HttpResponseNotFound(f"game with id {game_id} not found")
 
     game_object = Game.objects.filter(id=game_id).get()
-    cards_in_play_by_str, cards_in_play = get_cards_in_play(game_object, game_chapter)
-    card_played_in_round_form = CardPlayedInRoundForm(game=game_object, cards=cards_in_play)
+    cards_in_play_by_str, cards_in_play = get_cards_in_play(game_object, game_chapter, game_round)
+    card_played_in_round_form = CardPlayedInRoundForm(game=game_object, cards=cards_in_play, chapter=game_chapter, round=game_round)
     card_retrived_in_round_form = CardRetrievedInRoundForm(game=game_object, cards=cards_in_play)
 
     if request.method == "POST":
