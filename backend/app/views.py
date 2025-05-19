@@ -3,13 +3,24 @@ from typing import Union, List, Tuple
 
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
-from django.db.models import Max
+from django.db.models import Max, Case, When, IntegerField, Q
+from collections import defaultdict
 
 from .forms import GameForm, PlayerForm, CardPlayedInRoundForm, CardRetrievedInRoundForm
 from .models import Game, Player, GameRound, CardNumber, CardSuit, CardPlayedInRound, CardRetrievedInRound, Card
 
 # Create your views here.
 
+number_order = Case(
+    When(number='ONE', then=1),
+    When(number='TWO', then=2),
+    When(number='THREE', then=3),
+    When(number='FOUR', then=4),
+    When(number='FIVE', then=5),
+    When(number='SIX', then=6),
+    When(number='SEVEN', then=7),
+    output_field=IntegerField()
+)
 
 def menu(request: HttpRequest) -> HttpResponse:
     for suit in[suit.value for suit in CardSuit]:
@@ -50,7 +61,7 @@ def games(request: HttpRequest) -> HttpResponse:
     game_objects = Game.objects.all()
     return render(request, "view.html", {"name": "games", "models":game_objects})
 
-def get_cards_in_play(game_object: Game, game_chapter: int, game_round: int) -> Tuple[List[str], List[str]]:
+def get_cards_to_play(game_object: Game, game_chapter: int, game_round: int):
     cards_out_of_play_tmp = {}
 
     card_by_str = {}
@@ -62,7 +73,7 @@ def get_cards_in_play(game_object: Game, game_chapter: int, game_round: int) -> 
         card_by_str[str(card_object)] = card_object
 
     game_round_objects = GameRound.objects.filter(game=game_object, chapter=game_chapter).all()
-    card_played_in_round_objects = CardPlayedInRound.objects.filter(game_round__in = game_round_objects).all()
+    card_played_in_round_objects = CardPlayedInRound.objects.filter(game_round__in=game_round_objects).all()
 
     for card_played_in_round_object in card_played_in_round_objects:
         key = str(card_played_in_round_object.card)
@@ -72,24 +83,52 @@ def get_cards_in_play(game_object: Game, game_chapter: int, game_round: int) -> 
             cards_out_of_play_tmp[key] = cards_out_of_play_tmp[key] +  1
 
     game_round_objects = GameRound.objects.filter(game=game_object, chapter=game_chapter).exclude(round=game_round).all()
-    card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(game_round__in = game_round_objects).all()
+    card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(game_round__in=game_round_objects).all()
     for card_retrieved_in_round_object in card_retrieved_in_round_objects:
         key = str(card_retrieved_in_round_object.card)
         cards_out_of_play_tmp[key] = cards_out_of_play_tmp[key] - 1
-    
+
     for card, number in cards_out_of_play_tmp.items():
         if number == 1:
             card_by_str.pop(card)
-    return list(card_by_str.keys()), list(card_by_str.values())
+
+    return Card.objects.filter(id__in=[card.id for card in card_by_str.values()]).order_by("suit", number_order).all()
+
+def get_players_to_play(game_object: Game, game_chapter: int, game_round:int):
+    player_objects = game_object.players.all()
+    game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=game_round).get()
+    player_ids = []
+    for player_object in player_objects:
+        if not CardPlayedInRound.objects.filter(game_round=game_round_object, player=player_object).exists():
+            player_ids.append(player_object.id)
+    return Player.objects.filter(pk__in=player_ids).all()
+
+def get_cards_to_retrieve(game_object: Game, cards_to_play):
+    player_objects = game_object.players.all()
+    if len(player_objects) == 4:
+        return Card.objects.exclude(id__in=[card.id for card in cards_to_play]).order_by("suit", number_order).all()
+    else:
+        return Card.objects.exclude(Q(id__in=[card.id for card in cards_to_play]) | Q(number__in = [CardNumber.ONE, CardNumber.SEVEN])).order_by("suit", number_order).all()
+
+def get_cards_to_play_images(cards_to_play):
+
+    rows_images = defaultdict(list)
+    for card_to_play in cards_to_play:
+        rows_images[card_to_play.suit].append(card_to_play.suit + "/" + card_to_play.number + ".jpg")
+    return rows_images.values()
 
 def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round: int) -> Union[HttpResponse, HttpResponseNotFound]:
     if not Game.objects.filter(id=game_id).exists():
         return HttpResponseNotFound(f"game with id {game_id} not found")
 
     game_object = Game.objects.filter(id=game_id).get()
-    cards_in_play_by_str, cards_in_play = get_cards_in_play(game_object, game_chapter, game_round)
-    card_played_in_round_form = CardPlayedInRoundForm(game=game_object, cards=cards_in_play, chapter=game_chapter, round=game_round)
-    card_retrived_in_round_form = CardRetrievedInRoundForm(game=game_object, cards=cards_in_play)
+
+    cards_to_play = get_cards_to_play(game_object, game_chapter, game_round)
+    cards_to_play_images = get_cards_to_play_images(cards_to_play)
+    players_to_play = get_players_to_play(game_object, game_chapter, game_round)
+    cards_to_retrive = get_cards_to_retrieve(game_object, cards_to_play)
+    card_played_in_round_form = CardPlayedInRoundForm(players=players_to_play, cards=cards_to_play)
+    card_retrived_in_round_form = CardRetrievedInRoundForm(players=game_object.players.all(), cards=cards_to_retrive)
 
     if request.method == "POST":
         submit_type = request.POST.get('submit_type')
@@ -115,14 +154,6 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
         elif submit_type == 'new_chapter':
             GameRound(game = game_object, chapter = game_chapter + 1, round = 1).save()
             return redirect(f"/game/{game_id}/{game_chapter + 1}/{1}")
-
-    rows_images = []
-    for suit_name in [suit.value for suit in CardSuit]:
-        images_tmp = []
-        for number_value in [number.value for number in CardNumber]:
-            if suit_name + "." + number_value in cards_in_play_by_str:
-                images_tmp.append(suit_name + "/" + number_value + ".jpg")
-        rows_images.append(images_tmp)
 
     cards_in_hand = {}
 
@@ -151,7 +182,7 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
                                          "cards_in_hand": cards_in_hand.items(),
                                          "cards_played": cards_played_in_chapter,
                                          "cards_retrieved": cards_retrieved_in_chapter,
-                                         "rows_images": rows_images,
+                                         "rows_images": cards_to_play_images,
                                          "game_chapter": game_chapter,
                                          "game_round": game_round,
                                          "card_played_in_round_form": card_played_in_round_form,
