@@ -204,20 +204,9 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
                 card_played_in_round_object = CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).get()
                 cards_played_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
 
-    cards_retrieved_in_chapter = []
-    for player in game_object.players.all():
-        cards_retrieved_in_chapter.append(player.nick)
-        for i in range(1, game_round + 1):
-            game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
-            if CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).exists():
-                card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).all()
-                for card_retrieved_in_round_object in card_retrieved_in_round_objects:
-                    cards_retrieved_in_chapter[-1] += f" round {i}: {card_retrieved_in_round_object.card}"
-
     return render(request, "game.html", {"name": game_object.name,
                                          "cards_in_hand": cards_in_hand.items(),
                                          "cards_played": cards_played_in_chapter,
-                                         "cards_retrieved": cards_retrieved_in_chapter,
                                          "rows_images": cards_to_play_images,
                                          "game_chapter": game_chapter,
                                          "game_round": game_round,
