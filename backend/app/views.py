@@ -195,18 +195,23 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
 
     cards_in_hand = get_cards_in_hand(game_object)
 
-    cards_played_in_chapter = []
+    cards_played_in_chapter = defaultdict(list)
     for player in game_object.players.all():
-        cards_played_in_chapter.append(player.nick)
+        cards_played_in_chapter[player.nick] = []
         for i in range(1, game_round + 1):
+            cards_played_in_chapter[player.nick].append([])
             game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
             if CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).exists():
                 card_played_in_round_object = CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).get()
-                cards_played_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
+                if card_played_in_round_object.card is not None:
+                    cards_played_in_chapter[player.nick][-1].append(card_played_in_round_object.card.suit + "/" + card_played_in_round_object.card.number + ".jpg")
+                for i in range(0, card_played_in_round_object.cards_face_down):
+                    cards_played_in_chapter[player.nick][-1].append("back.png")
+            
 
     return render(request, "game.html", {"name": game_object.name,
                                          "cards_in_hand": cards_in_hand.items(),
-                                         "cards_played": cards_played_in_chapter,
+                                         "cards_played": cards_played_in_chapter.items(),
                                          "rows_images": cards_to_play_images,
                                          "game_chapter": game_chapter,
                                          "game_round": game_round,

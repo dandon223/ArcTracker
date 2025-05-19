@@ -6,6 +6,38 @@
     <title>Game</title>
 </head>
 <body>
+<style>
+  .row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .row img {
+    width: 150px;
+    height: auto;
+    border: 1px solid #ccc;
+  }
+
+  .column {
+    flex: 1; /* Equal width columns */
+    margin: 0 10px;
+    border: 1px solid #ccc; /* Adds a visible line around columns */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .form-container {
+    display: flex;
+    gap: 1rem;
+    margin: auto;
+  }
+
+  .form-column {
+    flex: 1;
+  }
+</style>
+
     <h1>Game: {{ name }}, Chapter: {{ game_chapter }}, Round: {{ game_round }}</h1>
 <hr>
 <form method="post">
@@ -21,7 +53,7 @@
   {% load static %}
   <h2>Cards In Hand:</h2>
   {% for player, row_images in cards_in_hand %}
-  <h3>{{ player }}</h3>
+  <h3>Player: {{ player }}</h3>
   <div class="row">
     {% for img in row_images %}
     <img src="{% static 'action_cards/'|add:img %}" alt="{{ img }}">
@@ -31,25 +63,34 @@
 </div>
 <hr>
 <div>
-    <h2>Cards Played:</h2>
-    {% for player in cards_played %}
-    <b>{{ player }}</b><br />
+  {% load static %}
+  <h2>Cards Played:</h2>
+  {% for player, cards in cards_played %}
+  <h3>Player: {{ player }}</h3>
+
+  <!-- Column number row -->
+  <div class="row">
+    {% for row_images in cards %}
+      <div class="column">
+        <strong>Round: {{ forloop.counter }}</strong>
+      </div>
     {% endfor %}
+  </div>
+  <!-- Images row -->
+  <div class="row">
+    {% for row_images in cards %}
+    <div class="column">
+      {% for img in row_images %}
+      <img src="{% static 'action_cards/'|add:img %}" alt="{{ img }}">
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
 </div>
 <hr>
 
-<style>
-  .row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .row img {
-    width: 150px;
-    height: auto;
-    border: 1px solid #ccc;
-  }
-</style>
+
 <h2>Cards in play:</h2>
 {% for row_images in rows_images %}
   <div class="row">
@@ -59,16 +100,6 @@
   </div>
 {% endfor %}
 <hr>
-<style>
-  .form-container {
-    display: flex;
-    gap: 1rem;
-    margin: auto;
-  }
-  .form-column {
-    flex: 1;
-  }
-</style>
 <div class="form-container">
   <div class="form-column">
       <form method="POST">
