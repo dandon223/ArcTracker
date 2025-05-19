@@ -50,6 +50,13 @@ class Game(models.Model):
     def __str__(self) -> str:
         return "Name: " + str(self.name) +" Players: " + str([player.nick for player in self.players.all()])
 
+class PlayerHand(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    cards = models.ManyToManyField(Card)
+    number_of_cards = models.IntegerField()
+
 class GameRound(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)

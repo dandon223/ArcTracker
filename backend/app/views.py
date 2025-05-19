@@ -7,7 +7,7 @@ from django.db.models import Max, Case, When, IntegerField, Q
 from collections import defaultdict
 
 from .forms import GameForm, PlayerForm, CardPlayedInRoundForm, CardRetrievedInRoundForm
-from .models import Game, Player, GameRound, CardNumber, CardSuit, CardPlayedInRound, CardRetrievedInRound, Card
+from .models import Game, Player, GameRound, CardNumber, CardSuit, CardPlayedInRound, CardRetrievedInRound, Card, PlayerHand
 
 # Create your views here.
 
@@ -39,6 +39,8 @@ def new_game(request: HttpRequest) -> HttpResponse:
             game = form.save()
             game_round = GameRound(game=game, chapter=1, round = 1)
             game_round.save()
+            for player in game.players.all():
+                PlayerHand(player=player, game=game, number_of_cards=6).save()
             return redirect(f"/game/{game.id}/1/1")
 
     return render(request, "new_game.html", {"form": form})
@@ -76,6 +78,8 @@ def get_cards_to_play(game_object: Game, game_chapter: int, game_round: int):
     card_played_in_round_objects = CardPlayedInRound.objects.filter(game_round__in=game_round_objects).all()
 
     for card_played_in_round_object in card_played_in_round_objects:
+        if card_played_in_round_object.card is None:
+            continue
         key = str(card_played_in_round_object.card)
         if key not in cards_out_of_play_tmp:
             cards_out_of_play_tmp[key] = 1
@@ -85,6 +89,8 @@ def get_cards_to_play(game_object: Game, game_chapter: int, game_round: int):
     game_round_objects = GameRound.objects.filter(game=game_object, chapter=game_chapter).exclude(round=game_round).all()
     card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(game_round__in=game_round_objects).all()
     for card_retrieved_in_round_object in card_retrieved_in_round_objects:
+        if card_retrieved_in_round_object.card is None:
+            continue
         key = str(card_retrieved_in_round_object.card)
         cards_out_of_play_tmp[key] = cards_out_of_play_tmp[key] - 1
 
@@ -105,10 +111,15 @@ def get_players_to_play(game_object: Game, game_chapter: int, game_round:int):
 
 def get_cards_to_retrieve(game_object: Game, cards_to_play):
     player_objects = game_object.players.all()
+    card_ids = [card.id for card in cards_to_play]
+    for player_object in player_objects:
+        player_hand_object = PlayerHand.objects.filter(game=game_object, player=player_object).get()
+        for card_object in player_hand_object.cards.all():
+            card_ids.append(card_object.id)
     if len(player_objects) == 4:
-        return Card.objects.exclude(id__in=[card.id for card in cards_to_play]).order_by("suit", number_order).all()
+        return Card.objects.exclude(id__in=card_ids).order_by("suit", number_order).all()
     else:
-        return Card.objects.exclude(Q(id__in=[card.id for card in cards_to_play]) | Q(number__in = [CardNumber.ONE, CardNumber.SEVEN])).order_by("suit", number_order).all()
+        return Card.objects.exclude(Q(id__in=card_ids) | Q(number__in = [CardNumber.ONE, CardNumber.SEVEN])).order_by("suit", number_order).all()
 
 def get_cards_to_play_images(cards_to_play):
 
@@ -116,6 +127,18 @@ def get_cards_to_play_images(cards_to_play):
     for card_to_play in cards_to_play:
         rows_images[card_to_play.suit].append(card_to_play.suit + "/" + card_to_play.number + ".jpg")
     return rows_images.values()
+
+def get_cards_in_hand(game_object: Game):
+    player_objects = game_object.players.all()
+    cards_in_hand = defaultdict(list)
+    for player_object in player_objects:
+        player_hand_object = PlayerHand.objects.filter(player=player_object, game=game_object).get()
+        player_card_objects = player_hand_object.cards.all()
+        for player_card_object in player_card_objects:
+            cards_in_hand[player_object.nick].append(player_card_object.suit + "/" + player_card_object.number + ".jpg")
+        for i in range(0, player_hand_object.number_of_cards - len(player_card_objects)):
+            cards_in_hand[player_object.nick].append("back.png")
+    return cards_in_hand
 
 def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round: int) -> Union[HttpResponse, HttpResponseNotFound]:
     if not Game.objects.filter(id=game_id).exists():
@@ -139,6 +162,11 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
                 card_played_in_round = card_played_in_round_form.save(commit=False)
                 card_played_in_round.game_round = game_round_object
                 card_played_in_round.save()
+                player_hand = PlayerHand.objects.filter(player=card_played_in_round.player, game=game_object).get()
+                if card_played_in_round.card is not None:
+                    player_hand.number_of_cards -= 1
+                player_hand.number_of_cards -= card_played_in_round.cards_face_down
+                player_hand.save()
                 return redirect(f"/game/{game_id}/{game_chapter}/{game_round}")
         elif submit_type == 'card_retrieved':
             card_retrived_in_round_form = CardRetrievedInRoundForm(request.POST)
@@ -147,26 +175,34 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
                 card_retrieved_in_round = card_retrived_in_round_form.save(commit=False)
                 card_retrieved_in_round.game_round = game_round_object
                 card_retrieved_in_round.save()
+                player_hand = PlayerHand.objects.filter(player=card_retrieved_in_round.player, game=game_object).get()
+                player_hand.number_of_cards += 1
+                player_hand.cards.add(card_retrieved_in_round.card)
+                player_hand.save()
                 return redirect(f"/game/{game_id}/{game_chapter}/{game_round}")
         elif submit_type == 'new_round':
             GameRound(game = game_object, chapter = game_chapter, round = game_round + 1).save()
             return redirect(f"/game/{game_id}/{game_chapter}/{game_round + 1}")
         elif submit_type == 'new_chapter':
             GameRound(game = game_object, chapter = game_chapter + 1, round = 1).save()
+            player_objects = game_object.players.all()
+            for player_object in player_objects:
+                player_hand = PlayerHand.objects.filter(player=player_object, game=game_object).get()
+                player_hand.cards.clear()
+                player_hand.number_of_cards = 6
+                player_hand.save()
             return redirect(f"/game/{game_id}/{game_chapter + 1}/{1}")
 
-    cards_in_hand = {}
+    cards_in_hand = get_cards_in_hand(game_object)
 
     cards_played_in_chapter = []
     for player in game_object.players.all():
         cards_played_in_chapter.append(player.nick)
-        cards_in_hand[player.nick] = 6
         for i in range(1, game_round + 1):
             game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
             if CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).exists():
                 card_played_in_round_object = CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).get()
                 cards_played_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
-                cards_in_hand[player.nick] -= card_played_in_round_object.cards_face_down + 1
 
     cards_retrieved_in_chapter = []
     for player in game_object.players.all():
@@ -174,9 +210,9 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
         for i in range(1, game_round + 1):
             game_round_object = GameRound.objects.filter(game=game_object, chapter=game_chapter, round=i).get()
             if CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).exists():
-                card_played_in_round_object = CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).get()
-                cards_in_hand[player.nick] +=1
-                cards_retrieved_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
+                card_retrieved_in_round_objects = CardRetrievedInRound.objects.filter(player=player, game_round=game_round_object).all()
+                for card_retrieved_in_round_object in card_retrieved_in_round_objects:
+                    cards_retrieved_in_chapter[-1] += f" round {i}: {card_retrieved_in_round_object.card}"
 
     return render(request, "game.html", {"name": game_object.name,
                                          "cards_in_hand": cards_in_hand.items(),

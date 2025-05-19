@@ -18,10 +18,16 @@
 </form>
 <hr>
 <div>
-    <h2>Cards In Hand:</h2>
-    {% for player, value in cards_in_hand %}
-    <b>{{ player }} : {{ value }}</b><br />
+  {% load static %}
+  <h2>Cards In Hand:</h2>
+  {% for player, row_images in cards_in_hand %}
+  <h3>{{ player }}</h3>
+  <div class="row">
+    {% for img in row_images %}
+    <img src="{% static 'action_cards/'|add:img %}" alt="{{ img }}">
     {% endfor %}
+  </div>
+  {% endfor %}
 </div>
 <hr>
 <div>
@@ -31,14 +37,6 @@
     {% endfor %}
 </div>
 <hr>
-<div>
-    <h2>Cards Retrieved:</h2>
-    {% for player in cards_retrieved %}
-    <b>{{ player }}</b><br />
-    {% endfor %}
-</div>
-<hr>
-{% load static %}
 
 <style>
   .row {
@@ -61,16 +59,31 @@
   </div>
 {% endfor %}
 <hr>
-    <form method="POST">
+<style>
+  .form-container {
+    display: flex;
+    gap: 1rem;
+    margin: auto;
+  }
+  .form-column {
+    flex: 1;
+  }
+</style>
+<div class="form-container">
+  <div class="form-column">
+      <form method="POST">
         {% csrf_token %}
         {{ card_played_in_round_form.as_p }}
         <button type="submit" name="submit_type" value="card_played">Add card played in round</button>
-    </form>
-<hr>
+      </form>
+  </div>
+  <div class="form-column">
     <form method="POST">
         {% csrf_token %}
         {{ card_retrived_in_round_form.as_p }}
         <button type="submit" name="submit_type" value="card_retrieved">Add card retrieved in round</button>
     </form>
+  </div>
+</div>
 </body>
 </html>
