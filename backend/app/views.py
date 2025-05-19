@@ -135,10 +135,7 @@ def game(request: HttpRequest, game_id: uuid.UUID, game_chapter: int, game_round
             if CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).exists():
                 card_played_in_round_object = CardPlayedInRound.objects.filter(player=player, game_round=game_round_object).get()
                 cards_played_in_chapter[-1] += f" round {i}: {card_played_in_round_object.card}"
-                if card_played_in_round_object.card_face_down:
-                    cards_in_hand[player.nick] -=2
-                else:
-                    cards_in_hand[player.nick] -=1
+                cards_in_hand[player.nick] -= card_played_in_round_object.cards_face_down + 1
 
     cards_retrieved_in_chapter = []
     for player in game_object.players.all():

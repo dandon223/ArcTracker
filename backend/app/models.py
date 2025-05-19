@@ -21,6 +21,11 @@ class CardNumber(models.TextChoices):
     SIX = "SIX"
     SEVEN = "SEVEN"
 
+class CardsPlayedFaceDown(models.IntegerChoices):
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+
 class Card(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     suit = models.CharField(max_length=20, choices=CardSuit.choices)
@@ -57,10 +62,17 @@ class CardPlayedInRound(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     game_round = models.ForeignKey(GameRound, on_delete=models.CASCADE)
-    card = models.ForeignKey(Card, on_delete=models.CASCADE)
-    card_face_down = models.BooleanField()
+    card = models.ForeignKey(Card, null=True, blank=True, on_delete=models.SET_NULL)
+    cards_face_down = models.IntegerField(choices=CardsPlayedFaceDown.choices, default=CardsPlayedFaceDown.ZERO)
     class Meta:
         unique_together = ('player', 'game_round')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.card is not None and self.cards_face_down == CardsPlayedFaceDown.TWO:
+            raise ValidationError("With played card face up you can only play up to one card face down.")
+        if self.card is None and self.cards_face_down == CardsPlayedFaceDown.ZERO:
+            raise ValidationError("You have to play atleast ine card.")
 
 class CardRetrievedInRound(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -36,7 +36,7 @@ number_order = Case(
 class CardPlayedInRoundForm(forms.ModelForm):
     class Meta:
         model = CardPlayedInRound
-        fields = ["player", "card", "card_face_down"]
+        fields = ["player", "card", "cards_face_down"]
 
     def __init__(self, *args, **kwargs):
         game = kwargs.pop('game', None)  # passed from view
