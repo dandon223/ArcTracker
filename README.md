@@ -5,7 +5,7 @@ Simple web app used for tracking played cards in game of ARCS by Cole Wehrle
 ## Documentation
 
 Documentations is written in sphinx-needs.
-To create it locally Python 3.11 is needed.
+To create it locally Python 3.13 is needed.
 ```
 mkdir .venvs
 python3.13 -m venv .venvs/arc_tracker
@@ -24,6 +24,6 @@ python manage.py runserver
 ```
 To upload changes to model run:
 ```
-python manage.py makemigrations
+python manage.py makemigrations app
 python manage.py migrate
 ```
