@@ -9,7 +9,7 @@
 <body>
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ game_form.as_p }}
         <button type="submit" onclick="location.href = '/game'">Create and Start new game</button>
     </form>
 </body>

@@ -51,6 +51,7 @@ class Game(models.Model):
     name = models.CharField(max_length=256)
     created_time = models.DateTimeField(auto_now_add=True)
     players = models.ManyToManyField(Player)
+    cards_not_played = models.ManyToManyField(Card)
     finished = models.BooleanField(default=False)
 
     def __str__(self) -> str:
@@ -79,8 +80,10 @@ class CardPlayedInRound(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     game_round = models.ForeignKey(GameRound, on_delete=models.CASCADE)
-    card = models.ForeignKey(Card, null=True, blank=True, on_delete=models.SET_NULL)
-    cards_face_down = models.IntegerField(choices=CardsPlayedFaceDown.choices, default=CardsPlayedFaceDown.ZERO)
+    card_face_up = models.ForeignKey(Card, null=True, blank=True, on_delete=models.SET_NULL)
+    number_of_cards_face_down = models.IntegerField(
+        choices=CardsPlayedFaceDown.choices, default=CardsPlayedFaceDown.ZERO
+    )
 
     class Meta:
         unique_together = ("player", "game_round")
@@ -88,14 +91,7 @@ class CardPlayedInRound(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        if self.card is not None and self.cards_face_down == CardsPlayedFaceDown.TWO:
+        if self.card_face_up is not None and self.number_of_cards_face_down == CardsPlayedFaceDown.TWO:
             raise ValidationError("With played card face up you can only play up to one card face down.")
-        if self.card is None and self.cards_face_down == CardsPlayedFaceDown.ZERO:
-            raise ValidationError("You have to play atleast ine card.")
-
-
-class CardRetrievedInRound(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    game_round = models.ForeignKey(GameRound, on_delete=models.CASCADE)
-    card = models.ForeignKey(Card, on_delete=models.CASCADE)
+        if self.card_face_up is None and self.number_of_cards_face_down == CardsPlayedFaceDown.ZERO:
+            raise ValidationError("You have to play atleast one card.")

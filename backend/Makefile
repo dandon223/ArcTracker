@@ -10,7 +10,8 @@ check: format
 	pylint app ArcTracker
 
 restart:
-	rm db.sqlite3
+	rm -f db.sqlite3
+	rm -f app/migrations/*.py
 	python manage.py makemigrations app
 	python manage.py migrate
 

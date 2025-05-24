@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, IntegerField, Q, When
 
-from .models import Card, CardNumber, CardPlayedInRound, CardRetrievedInRound, Game, GameRound, Player, PlayerHand
+from .models import Card, CardNumber, CardPlayedInRound, Game, GameRound, Player, PlayerHand
 
 
 class GameForm(forms.ModelForm):  # type: ignore[type-arg]
@@ -46,38 +46,33 @@ number_order = Case(
 class CardPlayedInRoundForm(forms.ModelForm):
     class Meta:
         model = CardPlayedInRound
-        fields = ["player", "card", "cards_face_down"]
+        fields = ["card_face_up", "number_of_cards_face_down"]
 
     def __init__(self, *args, **kwargs):
-        players = kwargs.pop("players", None)  # passed from view
         cards = kwargs.pop("cards", None)  # passed from view
         super().__init__(*args, **kwargs)
 
-        if players is not None:
-            self.fields["player"].queryset = players
         if cards is not None:
-            self.fields["card"].queryset = cards
+            self.fields["card_face_up"].queryset = cards
 
 
-class CardRetrievedInRoundForm(forms.ModelForm):
-    class Meta:
-        model = CardRetrievedInRound
-        fields = ["player", "card"]
+class PlayerCardForm(forms.Form):
+    card = forms.ModelChoiceField(queryset=Card.objects.none())
 
     def __init__(self, *args, **kwargs):
-        players = kwargs.pop("players", None)  # passed from view
         cards = kwargs.pop("cards", None)  # passed from view
         super().__init__(*args, **kwargs)
 
-        if players is not None:
-            self.fields["player"].queryset = players
         if cards is not None:
             self.fields["card"].queryset = cards
 
 
 class NumberOfCardsAddedForm(forms.Form):
+    number_of_cards = forms.IntegerField(initial=0)
+
+
+class ChoosePlayerForm(forms.Form):
     player = forms.ModelChoiceField(queryset=Player.objects.none())
-    number_of_cards = forms.IntegerField(min_value=1)
 
     def __init__(self, *args, **kwargs):
         players = kwargs.pop("players", None)  # passed from view
