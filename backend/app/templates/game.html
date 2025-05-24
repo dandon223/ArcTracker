@@ -38,7 +38,7 @@
   }
 </style>
 
-    <h1>Game: {{ name }}, Chapter: {{ game_chapter }}, Round: {{ game_round }}</h1>
+    <h1>Game: {{ name }}, Chapter: {{ chapter_number }}, Round: {{ round_number }}</h1>
 <hr>
 <form method="post">
     {% csrf_token %}
@@ -57,7 +57,7 @@
 <div>
   {% load static %}
   <h2>Cards In Hand:</h2>
-  {% for player, row_images in cards_in_hand %}
+  {% for player, row_images in cards_by_hand %}
   <h3>Player: {{ player }}</h3>
   <div class="row">
     {% for img in row_images %}
@@ -97,9 +97,9 @@
 
 
 <h2>Cards in play:</h2>
-{% for row_images in rows_images %}
+{% for cards in cards_by_suit %}
   <div class="row">
-    {% for img in row_images %}
+    {% for img in cards %}
       <img src="{% static 'action_cards/'|add:img %}" alt="{{ img }}">
     {% endfor %}
   </div>

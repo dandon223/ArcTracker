@@ -5,9 +5,10 @@ format:
 	black .
 
 check: format
+	export DJANGO_SETTINGS_MODULE=ArcTracker.settings
 	mypy . 
 	$(flake8) . 
-	pylint app ArcTracker
+	pylint app
 
 restart:
 	rm -f db.sqlite3

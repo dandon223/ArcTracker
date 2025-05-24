@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 # Create your models here.
@@ -88,9 +89,7 @@ class CardPlayedInRound(models.Model):
     class Meta:
         unique_together = ("player", "game_round")
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-
+    def clean(self) -> None:
         if self.card_face_up is not None and self.number_of_cards_face_down == CardsPlayedFaceDown.TWO:
             raise ValidationError("With played card face up you can only play up to one card face down.")
         if self.card_face_up is None and self.number_of_cards_face_down == CardsPlayedFaceDown.ZERO:
