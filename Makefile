@@ -1,4 +1,4 @@
-.PHONY: docs clean
+.PHONY: docs docs_clean
 
 docs_clean:
 	rm -rf docs/_build/

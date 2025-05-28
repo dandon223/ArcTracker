@@ -29,45 +29,67 @@ Database class diagram
         SEVEN
       }
 
+      enum CardsPlayedFaceDown {
+        ZERO
+        ONE
+        TWO
+      }
+
       class Card {
-        - suit: CardSuit
-        - number: CardNumber
+        - uuid: UUID
+        + suit: CardSuit
+        + number: CardNumber
       }
 
       class Player {
         - uuid: UUID
         + nick: string
-        + create_time: Date
+        + created_time: Date
       }
 
       class Game {
         - uuid: UUID
         + name: string
-        + create_time: Date
+        + created_time: Date
+        + players: Player
+        + cards_not_played: Card
         + finished: bool
       }
 
-      class PlayerInGame {
-        - player_uuid: Player.uuid
-        - game_uuid: Game.uuid
-      }
-
-      Player "1" -- "*" PlayerInGame
-      Game "1" -- "*" PlayerInGame
+      Game "0..*" -- "2..4" Player
+      Game "0..*" -- "0..*" Card
 
       class GameRound {
-        - game_uuid: PlayerInGame.uuid
+        - uuid: UUID
+        - game: Game
         - chapter: Integer
         - round: Integer
       }
 
-      class CardsPlayedInGame {
-        - player_uuid: PlayerInGame.uuid
-        + card_suit_played: Card.suit
-        + card_number_played: Card.number
-        + card_face_down: bool
+      GameRound "1..*" -- "1" Game
+
+      class PlayerHand {
+        - uuid: UUID
+        + player: Player
+        + game: Game
+        + cards: Card
+        + number_of_cards: int
       }
 
-      CardsPlayedInGame "*" -- "1" Card
-      CardsPlayedInGame "1" -- "1" PlayerInGame
+      PlayerHand "0..*" -- "1" Player
+      PlayerHand "2..4" -- "1" Game
+      PlayerHand "0..*" -- "0..*" Card
+
+      class CardPlayedInRound {
+        - uuid: UUID
+        + player: Player
+        + game_round: GameRound
+        + card_face_up: Card
+        + number_of_cards_face_down: CardsPlayedFaceDown
+      }
+
+      CardPlayedInRound "0..*" -- "1" Player
+      CardPlayedInRound "0..*" -- "1" GameRound
+      CardPlayedInRound "0..*" -- "0..1" Card
+
       @enduml
