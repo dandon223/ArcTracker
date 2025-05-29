@@ -34,6 +34,9 @@ class Card(models.Model):
     suit = models.CharField(max_length=20, choices=CardSuit.choices)
     number = models.CharField(max_length=20, choices=CardNumber.choices)
 
+    class Meta:
+        unique_together = ("suit", "number")
+
     def __str__(self) -> str:
         return self.suit + "." + self.number
 

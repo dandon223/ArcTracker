@@ -5,10 +5,9 @@ format:
 	black .
 
 check: format
-	export DJANGO_SETTINGS_MODULE=ArcTracker.settings
 	mypy . 
 	$(flake8) . 
-	pylint app
+	export DJANGO_SETTINGS_MODULE=ArcTracker.settings ; pylint app
 
 restart:
 	rm -f db.sqlite3
@@ -16,5 +15,10 @@ restart:
 	python manage.py makemigrations app
 	python manage.py migrate
 
+make initial_data:
+	python3 manage.py loaddata app/initial_data/initial_data.json
+
 start:
 	python manage.py runserver
+
+make full_restart: restart initial_data start

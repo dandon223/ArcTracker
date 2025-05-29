@@ -1,0 +1,33 @@
+[
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "ONE"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "TWO"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "THREE"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "FOUR"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "FIVE"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "SIX"}},
+    {"model": "app.card", "fields": {"suit": "MOBILIZATION", "number": "SEVEN"}},
+
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "ONE"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "TWO"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "THREE"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "FOUR"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "FIVE"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "SIX"}},
+    {"model": "app.card", "fields": {"suit": "CONSTRUCTION", "number": "SEVEN"}},
+
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "ONE"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "TWO"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "THREE"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "FOUR"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "FIVE"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "SIX"}},
+    {"model": "app.card", "fields": {"suit": "AGGRESSION", "number": "SEVEN"}},
+
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "ONE"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "TWO"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "THREE"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "FOUR"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "FIVE"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "SIX"}},
+    {"model": "app.card", "fields": {"suit": "ADMINISTRATION", "number": "SEVEN"}}
+]

@@ -6,9 +6,6 @@ from django.shortcuts import redirect, render
 
 from .forms import CardPlayedInRoundForm, ChoosePlayerForm, GameForm, NumberOfCardsAddedForm, PlayerCardForm, PlayerForm
 from .models import (
-    Card,
-    CardNumber,
-    CardSuit,
     Game,
     GameRound,
     Player,
@@ -37,10 +34,6 @@ from .views_logic import (
 
 
 def menu(request: HttpRequest) -> HttpResponse:
-    for suit in CardSuit:
-        for number in CardNumber:
-            if not Card.objects.filter(suit=suit, number=number).exists():
-                Card(suit=suit, number=number).save()
     return render(request, "menu.html")
 
 
