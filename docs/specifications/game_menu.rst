@@ -43,3 +43,21 @@ Game menu
     :status: open
 
     ArcTracker shall allow user to unrevealed card to player hand during round.
+
+.. spec:: Show card hands
+    :id: SPEC_CARD_COUNTING_8
+    :status: open
+
+    ArcTracker shall present to user current player hands during game.
+
+.. spec:: Show cards played
+    :id: SPEC_CARD_COUNTING_9
+    :status: open
+
+    ArcTracker shall present to user cards played during current chapter.
+
+.. spec:: Show cards in play
+    :id: SPEC_CARD_COUNTING_10
+    :status: open
+
+    ArcTracker shall present to user cards that are believed to be available to play during current round.
