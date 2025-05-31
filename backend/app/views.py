@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Union
 
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
@@ -55,6 +55,11 @@ def login_view(request: HttpRequest) -> HttpResponse:
     else:
         authentication_form = AuthenticationForm()
     return render(request, "login.html", {"authentication_form": authentication_form})
+
+
+def logout_view(request: HttpRequest) -> HttpResponse:
+    logout(request)
+    return redirect("/")
 
 
 def menu_view(request: HttpRequest) -> HttpResponse:
