@@ -1,6 +1,7 @@
 import uuid
-from typing import Union
+from typing import Any, Union
 
+from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 
@@ -33,8 +34,23 @@ from .views_logic import (
 # Create your views here.
 
 
+def register(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        user_creation_form: Any = UserCreationForm(request.POST)
+        if user_creation_form.is_valid():
+            user_creation_form.save()
+            return redirect("/")
+    else:
+        user_creation_form = UserCreationForm()
+    return render(request, "register.html", {"user_creation_form": user_creation_form})
+
+
 def menu(request: HttpRequest) -> HttpResponse:
     return render(request, "menu.html")
+
+
+def user_menu(request: HttpRequest) -> HttpResponse:
+    return render(request, "user_menu.html")
 
 
 def new_game(request: HttpRequest) -> HttpResponse:
