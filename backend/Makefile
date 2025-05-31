@@ -15,10 +15,10 @@ restart:
 	python manage.py makemigrations app
 	python manage.py migrate
 
-make_initial_data:
+initial_data:
 	python3 manage.py loaddata app/initial_data/initial_data.json
 
 start:
 	python manage.py runserver
 
-make_full_restart: restart initial_data start
+full_restart: restart initial_data start
