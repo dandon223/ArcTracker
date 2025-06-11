@@ -1,6 +1,8 @@
 import uuid
-from typing import Union
+from typing import Any, Union
 
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 
@@ -33,11 +35,42 @@ from .views_logic import (
 # Create your views here.
 
 
-def menu(request: HttpRequest) -> HttpResponse:
+def register_view(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        user_creation_form: Any = UserCreationForm(request.POST)
+        if user_creation_form.is_valid():
+            login(request, user_creation_form.save())
+            return redirect("/user_menu")
+    else:
+        user_creation_form = UserCreationForm()
+    return render(request, "register.html", {"user_creation_form": user_creation_form})
+
+
+def login_view(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        authentication_form = AuthenticationForm(data=request.POST)
+        if authentication_form.is_valid():
+            login(request, authentication_form.get_user())
+            return redirect("/user_menu")
+    else:
+        authentication_form = AuthenticationForm()
+    return render(request, "login.html", {"authentication_form": authentication_form})
+
+
+def logout_view(request: HttpRequest) -> HttpResponse:
+    logout(request)
+    return redirect("/")
+
+
+def menu_view(request: HttpRequest) -> HttpResponse:
     return render(request, "menu.html")
 
 
-def new_game(request: HttpRequest) -> HttpResponse:
+def user_menu_view(request: HttpRequest) -> HttpResponse:
+    return render(request, "user_menu.html", {"user_name": request.user.username})
+
+
+def new_game_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         game_form = GameForm(request.POST)
         if game_form.is_valid():
@@ -52,7 +85,7 @@ def new_game(request: HttpRequest) -> HttpResponse:
     return render(request, "new_game.html", {"game_form": game_form})
 
 
-def new_player(request: HttpRequest) -> HttpResponse:
+def new_player_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = PlayerForm(request.POST)
         if form.is_valid():
@@ -63,15 +96,15 @@ def new_player(request: HttpRequest) -> HttpResponse:
     return render(request, "new_player.html", {"form": form})
 
 
-def players(request: HttpRequest) -> HttpResponse:
+def players_view(request: HttpRequest) -> HttpResponse:
     return render(request, "view.html", {"name": "players", "models": Player.objects.all()})
 
 
-def games(request: HttpRequest) -> HttpResponse:
+def games_view(request: HttpRequest) -> HttpResponse:
     return render(request, "view.html", {"name": "games", "models": Game.objects.all()})
 
 
-def new_action(  # pylint: disable=too-many-return-statements
+def new_action_view(  # pylint: disable=too-many-return-statements
     request: HttpRequest, game_id: uuid.UUID, chapter_number: int, round_number: int, player_id: uuid.UUID
 ) -> Union[HttpResponse, HttpResponseNotFound]:
     if not Game.objects.filter(id=game_id).exists():
@@ -129,7 +162,7 @@ def new_action(  # pylint: disable=too-many-return-statements
     )
 
 
-def current_game(
+def current_game_view(
     request: HttpRequest, game_id: uuid.UUID, chapter_number: int, round_number: int
 ) -> Union[HttpResponse, HttpResponseNotFound]:
     if not Game.objects.filter(id=game_id).exists():
