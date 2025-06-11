@@ -4,7 +4,11 @@ format:
 	isort .
 	black .
 
-check: format
+format_check:
+	isort . --check
+	black . --check
+
+check: format_check
 	mypy . 
 	$(flake8) . 
 	export DJANGO_SETTINGS_MODULE=ArcTracker.settings ; pylint app
