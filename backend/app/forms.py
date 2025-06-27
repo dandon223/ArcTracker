@@ -1,6 +1,7 @@
 from typing import Optional
 
 from django import forms
+from django.contrib.auth import models as auth_models
 from django.core.exceptions import ValidationError
 from django.db.models.query import QuerySet
 
@@ -12,7 +13,11 @@ class GameForm(forms.ModelForm):  # type: ignore[type-arg]
         model = Game
         fields = ["name", "players"]
 
-    players = forms.ModelMultipleChoiceField(queryset=Player.objects.all(), widget=forms.CheckboxSelectMultiple)
+    def __init__(self, *args, user: auth_models.User, **kwargs):  # type: ignore[no-untyped-def]
+        super().__init__(*args, **kwargs)
+        self.fields["players"] = forms.ModelMultipleChoiceField(
+            queryset=Player.objects.filter(user=user), widget=forms.CheckboxSelectMultiple
+        )
 
     def clean_players(self):  # type: ignore[no-untyped-def]
         players = self.cleaned_data.get("players")

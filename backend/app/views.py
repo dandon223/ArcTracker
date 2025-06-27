@@ -2,17 +2,14 @@ import uuid
 from typing import Any, Union
 
 from django.contrib.auth import login, logout
+from django.contrib.auth import models as auth_models
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 
 from .forms import CardPlayedInRoundForm, ChoosePlayerForm, GameForm, NumberOfCardsAddedForm, PlayerCardForm, PlayerForm
-from .models import (
-    Game,
-    GameRound,
-    Player,
-    PlayerHand,
-)
+from .models import CardPlayedInRound, Game, GameRound, Player, PlayerHand
 from .views_logic import (
     assign_cards,
     cards_number_order,
@@ -57,6 +54,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     return render(request, "login.html", {"authentication_form": authentication_form})
 
 
+@login_required(login_url="/login/")
 def logout_view(request: HttpRequest) -> HttpResponse:
     logout(request)
     return redirect("/")
@@ -66,49 +64,69 @@ def menu_view(request: HttpRequest) -> HttpResponse:
     return render(request, "menu.html")
 
 
+@login_required(login_url="/login/")
 def user_menu_view(request: HttpRequest) -> HttpResponse:
     return render(request, "user_menu.html", {"user_name": request.user.username})
 
 
+@login_required(login_url="/login/")
 def new_game_view(request: HttpRequest) -> HttpResponse:
+    assert isinstance(request.user, auth_models.User)
     if request.method == "POST":
-        game_form = GameForm(request.POST)
+        game_form = GameForm(request.POST, user=request.user)
         if game_form.is_valid():
-            game = game_form.save()
+            game = game_form.save(commit=False)
+            game.user = request.user
+            game.save()
+            game_form.save_m2m()
             assign_cards(game)
             create_initial_round(game)
             deal_initial_hands(game)
             return redirect(f"/game/{game.id}/1/1")
     else:
-        game_form = GameForm()
+        game_form = GameForm(user=request.user)
 
     return render(request, "new_game.html", {"game_form": game_form})
 
 
-def new_player_view(request: HttpRequest) -> HttpResponse:
+@login_required(login_url="/login/")
+def new_player_view(request: HttpRequest) -> Union[HttpResponse, HttpResponseNotFound]:
+    assert isinstance(request.user, auth_models.User)
     if request.method == "POST":
         form = PlayerForm(request.POST)
         if form.is_valid():
-            form.save()
+            if Player.objects.filter(nick=form.cleaned_data["nick"], user=request.user).exists():
+                return HttpResponseNotFound(f"player with nick {form.cleaned_data['nick']} already exists")
+            player = form.save(commit=False)
+            player.user = request.user
+            player.save()
             return redirect("/new_player/")
     else:
         form = PlayerForm()
     return render(request, "new_player.html", {"form": form})
 
 
+@login_required(login_url="/login/")
 def players_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "view.html", {"name": "players", "models": Player.objects.all()})
+    assert isinstance(request.user, auth_models.User)
+    return render(request, "view.html", {"name": "players", "models": Player.objects.filter(user=request.user)})
 
 
+@login_required(login_url="/login/")
 def games_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "view.html", {"name": "games", "models": Game.objects.all()})
+    assert isinstance(request.user, auth_models.User)
+    return render(request, "view.html", {"name": "games", "models": Game.objects.filter(user=request.user)})
 
 
-def new_action_view(  # pylint: disable=too-many-return-statements
+@login_required(login_url="/login/")
+def new_action_view(  # pylint: disable=too-many-return-statements, too-many-branches
     request: HttpRequest, game_id: uuid.UUID, chapter_number: int, round_number: int, player_id: uuid.UUID
 ) -> Union[HttpResponse, HttpResponseNotFound]:
-    if not Game.objects.filter(id=game_id).exists():
+    assert isinstance(request.user, auth_models.User)
+    if not Game.objects.filter(id=game_id, user=request.user).exists():
         return HttpResponseNotFound(f"game with id {game_id} not found")
+    if not Player.objects.filter(id=player_id, user=request.user).exists():
+        return HttpResponseNotFound(f"player with id {player_id} not found")
     game = Game.objects.filter(id=game_id).get()
     player = Player.objects.filter(id=player_id).get()
     player_hand = PlayerHand.objects.get(player=player, game=game)
@@ -162,21 +180,29 @@ def new_action_view(  # pylint: disable=too-many-return-statements
     )
 
 
-def current_game_view(
+@login_required(login_url="/login/")
+def current_game_view(  # pylint: disable=too-many-return-statements
     request: HttpRequest, game_id: uuid.UUID, chapter_number: int, round_number: int
 ) -> Union[HttpResponse, HttpResponseNotFound]:
-    if not Game.objects.filter(id=game_id).exists():
+    assert isinstance(request.user, auth_models.User)
+    if not Game.objects.filter(id=game_id, user=request.user).exists():
         return HttpResponseNotFound(f"game with id {game_id} not found")
 
     game_object = Game.objects.get(id=game_id)
     choose_player_form = ChoosePlayerForm(players=game_object.players.all())
-
+    number_of_players = len(game_object.players.all())
+    game_round = GameRound.objects.get(game=game_object, chapter=chapter_number, round=round_number)
+    cards_played_in_rounds = len(CardPlayedInRound.objects.filter(game_round=game_round))
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
         if submit_type == "new_round":
+            if cards_played_in_rounds < number_of_players:
+                return HttpResponseNotFound("not all players played in this round")
             GameRound(game=game_object, chapter=chapter_number, round=round_number + 1).save()
             return redirect(f"/game/{game_id}/{chapter_number}/{round_number + 1}")
         if submit_type == "new_chapter":
+            if cards_played_in_rounds < number_of_players:
+                return HttpResponseNotFound("not all players played in this round")
             start_new_chapter(game_object, chapter_number)
             return redirect(f"/game/{game_id}/{chapter_number + 1}/{1}")
         if submit_type == "new_action":
