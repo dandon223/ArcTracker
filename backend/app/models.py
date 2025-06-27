@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.auth import models as auth_models
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -43,16 +44,21 @@ class Card(models.Model):
 
 class Player(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(auth_models.User, on_delete=models.CASCADE)
     nick = models.CharField(max_length=256)
     created_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return "Nick: " + str(self.nick)
 
+    class Meta:
+        unique_together = ("user", "nick")
+
 
 class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=256)
+    user = models.ForeignKey(auth_models.User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=256, null=False, blank=False)
     created_time = models.DateTimeField(auto_now_add=True)
     players = models.ManyToManyField(Player)
     cards_not_played = models.ManyToManyField(Card)
@@ -60,6 +66,9 @@ class Game(models.Model):
 
     def __str__(self) -> str:
         return "Name: " + str(self.name) + " Players: " + str([player.nick for player in self.players.all()])
+
+    class Meta:
+        unique_together = ("user", "name")
 
 
 class PlayerHand(models.Model):
