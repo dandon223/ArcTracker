@@ -5,9 +5,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .api_views_logic import prepare_new_game
 from .models import Game, Player
 from .serializers import GameSerializerGet, GameSerializerPost, PlayerSerializerGet, PlayerSerializerPost
-from .views_logic import assign_cards, create_initial_round, deal_initial_hands
 
 
 class PlayerAPIView(APIView):  # type: ignore[misc]
@@ -78,8 +78,6 @@ class GameAPIView(APIView):  # type: ignore[misc]
                 )
             with transaction.atomic():
                 game = serializer.save(user=request.user)
-                assign_cards(game)
-                create_initial_round(game)
-                deal_initial_hands(game)
+                prepare_new_game(game)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
