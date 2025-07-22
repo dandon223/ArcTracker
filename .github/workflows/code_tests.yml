@@ -21,4 +21,6 @@ jobs:
     - name: Run tests
       run: |
         cd backend
+        make restart
+        make initial_data
         make test
