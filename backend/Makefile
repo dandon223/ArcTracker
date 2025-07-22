@@ -8,6 +8,9 @@ format_check:
 	isort . --check
 	black . --check
 
+test:
+	python manage.py test
+
 check: format_check
 	mypy . 
 	$(flake8) . 
