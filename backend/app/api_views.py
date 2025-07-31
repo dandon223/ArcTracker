@@ -103,8 +103,8 @@ class GameRoundAPIView(APIView):  # type: ignore[misc]
                 {"error": f"game with id {game_id} does not exists"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        round_games = GameRound.objects.filter(game=game)
-        serializer = GameRoundSerializerGet(round_games, many=True)
+        game_rounds = GameRound.objects.filter(game=game)
+        serializer = GameRoundSerializerGet(game_rounds, many=True)
         return Response(serializer.data)
 
 
@@ -130,8 +130,10 @@ class RoundCreateAPIView(APIView):  # type: ignore[misc]
                     {"error": "not all players that have cards played in this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        GameRound.objects.create(game=game, chapter=latest_round.chapter, round=latest_round.round + 1).save()
-        return Response(status=status.HTTP_201_CREATED)
+        game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter, round=latest_round.round + 1)
+        game_round.save()
+        serializer = GameRoundSerializerGet(game_round)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ChapterCreateAPIView(APIView):  # type: ignore[misc]
@@ -150,8 +152,10 @@ class ChapterCreateAPIView(APIView):  # type: ignore[misc]
         for player_hand in player_hands:
             if player_hand.number_of_cards != 0:
                 return Response({"error": "not all players have 0 cards"}, status=status.HTTP_400_BAD_REQUEST)
-        GameRound.objects.create(game=game, chapter=latest_round.chapter + 1, round=1).save()
-        return Response(status=status.HTTP_201_CREATED)
+        game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter + 1, round=1)
+        game_round.save()
+        serializer = GameRoundSerializerGet(game_round)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LatestChapterAPIView(APIView):  # type: ignore[misc]
@@ -217,6 +221,11 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
             with transaction.atomic():
                 card_played = serializer.save(game_round=latest_round)
                 assert isinstance(card_played, CardPlayedInRound)
+                if not PlayerHand.objects.filter(player=card_played.player, game=game).exists():
+                    return Response(
+                        {"error": f"player {card_played.player.id} does not play in this game"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 player_hand = PlayerHand.objects.get(player=card_played.player, game=game)
                 if card_played.card_face_up:
                     if card_played.card_face_up not in game.cards_not_played.all():
@@ -229,6 +238,6 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
                     game.save()
                 player_hand.number_of_cards -= card_played.number_of_cards_face_down
                 player_hand.save()
-
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
