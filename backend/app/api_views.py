@@ -121,11 +121,15 @@ class RoundCreateAPIView(APIView):  # type: ignore[misc]
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         player_hands = PlayerHand.objects.filter(game=game).all()
-        number_of_players = len(game.players.all())
-        cards_played_in_latest_round = len(CardPlayedInRound.objects.filter(game_round=latest_round))
         for player_hand in player_hands:
-            if player_hand.number_of_cards != 0 and cards_played_in_latest_round < number_of_players:
-                return Response({"error": "not all players that have cards played in this round"})
+            if (
+                player_hand.number_of_cards != 0
+                and not CardPlayedInRound.objects.filter(player=player_hand.player, game_round=latest_round).exists()
+            ):
+                return Response(
+                    {"error": "not all players that have cards played in this round"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         GameRound.objects.create(game=game, chapter=latest_round.chapter, round=latest_round.round + 1).save()
         return Response(status=status.HTTP_201_CREATED)
 
@@ -145,7 +149,7 @@ class ChapterCreateAPIView(APIView):  # type: ignore[misc]
         player_hands = PlayerHand.objects.filter(game=game).all()
         for player_hand in player_hands:
             if player_hand.number_of_cards != 0:
-                return Response({"error": "not all players have 0 cards"})
+                return Response({"error": "not all players have 0 cards"}, status=status.HTTP_400_BAD_REQUEST)
         GameRound.objects.create(game=game, chapter=latest_round.chapter + 1, round=1).save()
         return Response(status=status.HTTP_201_CREATED)
 
