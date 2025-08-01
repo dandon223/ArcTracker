@@ -3,7 +3,7 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import CardPlayedInRound, Game, GameRound, Player
+from .models import Card, CardPlayedInRound, Game, GameRound, Player
 
 User = get_user_model()
 
@@ -65,3 +65,9 @@ class CardPlayedInRoundSerializerGet(serializers.ModelSerializer):  # type: igno
     class Meta:
         model = CardPlayedInRound
         fields = ["id", "player", "game_round", "card_face_up", "number_of_cards_face_down"]
+
+
+class CardSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
+    class Meta:
+        model = Card
+        fields = ["id", "suit", "number"]

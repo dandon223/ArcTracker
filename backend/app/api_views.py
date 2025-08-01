@@ -9,10 +9,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .api_views_logic import prepare_new_game
-from .models import CardPlayedInRound, Game, GameRound, Player, PlayerHand
+from .models import Card, CardPlayedInRound, Game, GameRound, Player, PlayerHand
 from .serializers import (
     CardPlayedInRoundSerializerGet,
     CardPlayedInRoundSerializerPost,
+    CardSerializerGet,
     GameRoundSerializerGet,
     GameSerializerGet,
     GameSerializerPost,
@@ -254,3 +255,18 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CardAPIView(APIView):  # type: ignore[misc]
+    def get(self, request: Request) -> Response:
+        assert isinstance(request.user, auth_models.User)
+        filters: Dict[str, Any] = {}
+        suit = request.query_params.get("suit")
+        number = request.query_params.get("number")
+        if suit:
+            filters["suit"] = suit
+        if number:
+            filters["number"] = number
+        cards = Card.objects.filter(**filters)
+        serializer = CardSerializerGet(cards, many=True)
+        return Response(serializer.data)
