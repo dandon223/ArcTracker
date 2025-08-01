@@ -1,6 +1,23 @@
+from typing import Any
+
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import CardPlayedInRound, Game, GameRound, Player
+
+User = get_user_model()
+
+
+class RegisterSerializer(serializers.ModelSerializer):  # type: ignore[misc]
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ("username", "password")
+
+    def create(self, validated_data: Any) -> Any:
+        user = User.objects.create_user(username=validated_data["username"], password=validated_data["password"])
+        return user
 
 
 class PlayerSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]

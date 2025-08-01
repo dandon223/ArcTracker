@@ -19,5 +19,4 @@ urlpatterns = [
         name="new_action",
     ),
     path("api/", include("app.api_urls")),
-    path("api-auth/", include("rest_framework.urls")),
 ]
