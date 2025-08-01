@@ -39,7 +39,7 @@ class GameRoundAPITests(APITestCase):  # type: ignore[misc]
         GameRound.objects.create(game=game, chapter=1, round=1)
         response = self.client.get(self.get_game_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game with id {game.id} does not exists")
+        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
 
 
 class RoundCreateAPITests(APITestCase):  # type: ignore[misc]
@@ -92,7 +92,7 @@ class RoundCreateAPITests(APITestCase):  # type: ignore[misc]
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.post(self.get_create_round_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game with id {game.id} does not exists")
+        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
 
 
 class ChapterCreateAPITests(APITestCase):  # type: ignore[misc]
@@ -145,7 +145,7 @@ class ChapterCreateAPITests(APITestCase):  # type: ignore[misc]
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.post(self.get_create_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game with id {game.id} does not exists")
+        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
 
 
 class LatestChapterAPITests(APITestCase):  # type: ignore[misc]
@@ -176,4 +176,4 @@ class LatestChapterAPITests(APITestCase):  # type: ignore[misc]
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.get(self.get_latest_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game with id {game.id} does not exists")
+        self.assertEqual(response.data["error"], f"game {game.id} does not exist")

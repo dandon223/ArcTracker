@@ -71,3 +71,30 @@ class CardSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
     class Meta:
         model = Card
         fields = ["id", "suit", "number"]
+
+
+class CardRetrievedSerializerPost(serializers.Serializer):  # type: ignore[misc]
+    player = serializers.UUIDField()
+    card = serializers.UUIDField()
+
+    def update(self, instance: Any, validated_data: Any) -> Any:
+        raise NotImplementedError("Update is not supported.")
+
+    def create(self, validated_data: Any) -> Any:
+        raise NotImplementedError("Create is not supported.")
+
+
+class NumberOfCardsAddedSerializerPost(serializers.Serializer):  # type: ignore[misc]
+    player = serializers.UUIDField()
+    number_of_card = serializers.IntegerField()
+
+    def validate(self, attrs):  # type: ignore[no-untyped-def]
+        if attrs["number_of_card"] <= 0:
+            raise serializers.ValidationError({"error": "number_of_card must be greater than zero"})
+        return attrs
+
+    def update(self, instance: Any, validated_data: Any) -> Any:
+        raise NotImplementedError("Update is not supported.")
+
+    def create(self, validated_data: Any) -> Any:
+        raise NotImplementedError("Create is not supported.")
