@@ -65,13 +65,13 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         assert game is not None
         response = self.client.get(self.get_card_played_in_round_url(game.id), {"chapter": "a"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "chapter must be an integer")
+        self.assertEqual(response.data["detail"], "chapter must be an integer")
 
     def test_card_played_in_round_get_game_not_exists(self) -> None:
         game = Game.objects.create(name="b", user=self.user_two)
         response = self.client.get(self.get_card_played_in_round_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
     def test_card_played_in_round_post(self) -> None:
         game = Game.objects.first()
@@ -89,7 +89,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         data = {"player": player_id, "number_of_cards_face_down": 2}
         response = self.client.post(self.get_card_played_in_round_url(game.id), data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
     def test_card_played_in_round_post_already_played(self) -> None:
         game = Game.objects.first()
@@ -102,7 +102,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         data_two = {"player": player_id, "number_of_cards_face_down": 2}
         response = self.client.post(self.get_card_played_in_round_url(game.id), data_two)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], f"player {player_id} played card this round")
+        self.assertEqual(response.data["detail"], f"player {player_id} played card this round")
 
     def test_card_played_in_round_post_card_was_already_played(self) -> None:
         game = Game.objects.first()
@@ -116,7 +116,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         data = {"player": player_id, "card_face_up": card.id}
         response = self.client.post(self.get_card_played_in_round_url(game.id), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], f"card {card.id} was already played face up")
+        self.assertEqual(response.data["detail"], f"card {card.id} was already played face up")
 
     def test_card_played_in_round_post_wrong_number_of_cards_one(self) -> None:
         game = Game.objects.first()
@@ -162,4 +162,4 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         data = {"player": player_id, "card_face_up": card.id}
         response = self.client.post(self.get_card_played_in_round_url(game.id), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], f"player {player_id} does not play in this game")
+        self.assertEqual(response.data["detail"], f"player {player_id} does not play in this game")

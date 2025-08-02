@@ -1,8 +1,10 @@
+import uuid
 from typing import Any, Dict
 
 from django.contrib.auth import models as auth_models
 from django.db import transaction
 from rest_framework import status
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -26,6 +28,45 @@ from .serializers import (
 from .views_logic import get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
 
 
+class BaseAPIView(APIView):  # type: ignore[misc]
+
+    def get_game(self, user: Any, game_id: uuid.UUID) -> Game:
+        try:
+            return Game.objects.get(user=user, id=game_id)
+        except Game.DoesNotExist as exc:
+            raise NotFound(detail=f"game {game_id} does not exist") from exc
+
+    def get_game_by_name(self, user: Any, game_name: str) -> Game:
+        try:
+            return Game.objects.get(user=user, name=game_name)
+        except Game.DoesNotExist as exc:
+            raise NotFound(detail=f"game {game_name} does not exist") from exc
+
+    def get_player(self, user: Any, player_id: uuid.UUID) -> Player:
+        try:
+            return Player.objects.get(user=user, id=player_id)
+        except Player.DoesNotExist as exc:
+            raise NotFound(detail=f"player {player_id} does not exist") from exc
+
+    def get_player_by_nick(self, user: Any, player_nick: str) -> Player:
+        try:
+            return Player.objects.get(user=user, nick=player_nick)
+        except Player.DoesNotExist as exc:
+            raise NotFound(detail=f"player {player_nick} does not exist") from exc
+
+    def get_player_hand(self, player_id: uuid.UUID, game: Game) -> PlayerHand:
+        try:
+            return PlayerHand.objects.get(player__id=player_id, game=game)
+        except PlayerHand.DoesNotExist as exc:
+            raise ValidationError(detail=f"player {player_id} does not play in this game") from exc
+
+    def get_card(self, card_id: uuid.UUID) -> Card:
+        try:
+            return Card.objects.get(id=card_id)
+        except Card.DoesNotExist as exc:
+            raise ValidationError(detail=f"card {card_id} does not exist") from exc
+
+
 class RegisterAPIView(APIView):  # type: ignore[misc]
     permission_classes = [AllowAny]
 
@@ -37,20 +78,14 @@ class RegisterAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PlayerAPIView(APIView):  # type: ignore[misc]
+class PlayerAPIView(BaseAPIView):
 
     def get(self, request: Request) -> Response:
         assert isinstance(request.user, auth_models.User)
         nick = request.query_params.get("nick")
         if nick:
-            try:
-                player = Player.objects.get(user=request.user, nick=nick)
-                serializer = PlayerSerializerGet(player)
-            except Player.DoesNotExist:
-                return Response(
-                    {"error": f"player {nick} does not exist"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+            player = self.get_player_by_nick(request.user, nick)
+            serializer = PlayerSerializerGet(player)
         else:
             players = Player.objects.filter(user=request.user)
             serializer = PlayerSerializerGet(players, many=True)
@@ -62,7 +97,7 @@ class PlayerAPIView(APIView):  # type: ignore[misc]
         if serializer.is_valid():
             if Player.objects.filter(nick=serializer.validated_data["nick"], user=request.user).exists():
                 return Response(
-                    {"error": f"player {serializer.validated_data['nick']} already exist"},
+                    {"detail": f"player {serializer.validated_data['nick']} already exist"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             serializer.save(user=request.user)
@@ -70,20 +105,14 @@ class PlayerAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GameAPIView(APIView):  # type: ignore[misc]
+class GameAPIView(BaseAPIView):
 
     def get(self, request: Request) -> Response:
         assert isinstance(request.user, auth_models.User)
         name = request.query_params.get("name")
         if name:
-            try:
-                game = Game.objects.get(user=request.user, name=name)
-                serializer = GameSerializerGet(game)
-            except Game.DoesNotExist:
-                return Response(
-                    {"error": f"game {name} does not exist"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+            game = self.get_game_by_name(request.user, name)
+            serializer = GameSerializerGet(game)
         else:
             games = Game.objects.filter(user=request.user)
             serializer = GameSerializerGet(games, many=True)
@@ -95,12 +124,12 @@ class GameAPIView(APIView):  # type: ignore[misc]
         if serializer.is_valid():
             if Game.objects.filter(name=serializer.validated_data["name"], user=request.user).exists():
                 return Response(
-                    {"error": f"game {serializer.validated_data['name']} already exist"},
+                    {"detail": f"game {serializer.validated_data['name']} already exist"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if not 5 > len(serializer.validated_data["players"]) > 1:
                 return Response(
-                    {"error": "game has to have from 2 to 4 players"},
+                    {"detail": "game has to have from 2 to 4 players"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():
@@ -110,31 +139,19 @@ class GameAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GameRoundAPIView(APIView):  # type: ignore[misc]
-    def get(self, request: Request, game_id: str) -> Response:
+class GameRoundAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         game_rounds = GameRound.objects.filter(game=game)
         serializer = GameRoundSerializerGet(game_rounds, many=True)
         return Response(serializer.data)
 
 
-class RoundCreateAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class RoundCreateAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         player_hands = PlayerHand.objects.filter(game=game).all()
@@ -144,7 +161,7 @@ class RoundCreateAPIView(APIView):  # type: ignore[misc]
                 and not CardPlayedInRound.objects.filter(player=player_hand.player, game_round=latest_round).exists()
             ):
                 return Response(
-                    {"error": "not all players that have cards played in this round"},
+                    {"detail": "not all players that have cards played in this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter, round=latest_round.round + 1)
@@ -153,53 +170,35 @@ class RoundCreateAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ChapterCreateAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class ChapterCreateAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         player_hands = PlayerHand.objects.filter(game=game).all()
         for player_hand in player_hands:
             if player_hand.number_of_cards != 0:
-                return Response({"error": "not all players have 0 cards"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "not all players have 0 cards"}, status=status.HTTP_400_BAD_REQUEST)
         game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter + 1, round=1)
         game_round.save()
         serializer = GameRoundSerializerGet(game_round)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class LatestChapterAPIView(APIView):  # type: ignore[misc]
-    def get(self, request: Request, game_id: str) -> Response:
+class LatestChapterAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         return Response({"chapter": latest_round.chapter})
 
 
-class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
-    def get(self, request: Request, game_id: str) -> Response:
+class CardPlayedInRoundAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         chapter_param = request.query_params.get("chapter")
         filters: Dict[str, Any] = {"game_round__game": game}
         if chapter_param:
@@ -208,22 +207,16 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
                 filters["game_round__chapter"] = chapter
             except ValueError:
                 return Response(
-                    {"error": "chapter must be an integer"},
+                    {"detail": "chapter must be an integer"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         cards_played_in_round = CardPlayedInRound.objects.filter(**filters)
         serializer = CardPlayedInRoundSerializerGet(cards_played_in_round, many=True)
         return Response(serializer.data)
 
-    def post(self, request: Request, game_id: str) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         serializer = CardPlayedInRoundSerializerPost(data=request.data)
         if serializer.is_valid():
             latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
@@ -232,7 +225,7 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
                 game_round=latest_round, player=serializer.validated_data["player"]
             ).exists():
                 return Response(
-                    {"error": f"player {serializer.validated_data['player'].id} played card this round"},
+                    {"detail": f"player {serializer.validated_data['player'].id} played card this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             player = Player.objects.get(id=serializer.validated_data["player"].id)
@@ -241,14 +234,14 @@ class CardPlayedInRoundAPIView(APIView):  # type: ignore[misc]
                 assert isinstance(card_played, CardPlayedInRound)
                 if not PlayerHand.objects.filter(player=card_played.player, game=game).exists():
                     return Response(
-                        {"error": f"player {card_played.player.id} does not play in this game"},
+                        {"detail": f"player {card_played.player.id} does not play in this game"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 player_hand = PlayerHand.objects.get(player=card_played.player, game=game)
                 if card_played.card_face_up:
                     if card_played.card_face_up not in get_cards_to_play(game, player):
                         return Response(
-                            {"error": f"card {card_played.card_face_up.id} was already played face up"},
+                            {"detail": f"card {card_played.card_face_up.id} was already played face up"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
                     player_hand.number_of_cards -= 1
@@ -276,39 +269,21 @@ class CardAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.data)
 
 
-class CardRetrievedSerializerAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class CardRetrievedSerializerAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         serializer = CardRetrievedSerializerPost(data=request.data)
         if serializer.is_valid():
             player_id = serializer.validated_data["player"]
             card_id = serializer.validated_data["card"]
-            try:
-                player_hand = PlayerHand.objects.get(player__id=player_id, game=game)
-            except PlayerHand.DoesNotExist:
-                return Response(
-                    {"error": f"player {player_id} does not play in this game"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            try:
-                card = Card.objects.get(id=card_id)
-            except Card.DoesNotExist:
-                return Response(
-                    {"error": f"card {card_id} does not exist"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            player_hand = self.get_player_hand(player_id, game)
+            card = self.get_card(card_id)
             latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
             assert latest_round is not None
             if card not in get_cards_to_retrieve(game, latest_round.chapter, latest_round.round):
                 return Response(
-                    {"error": f"card {card_id} can not be retrieved"},
+                    {"detail": f"card {card_id} can not be retrieved"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             player_hand.number_of_cards += 1
@@ -318,63 +293,33 @@ class CardRetrievedSerializerAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NumberOfCardsAddedSerializerAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class NumberOfCardsAddedSerializerAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         serializer = NumberOfCardsAddedSerializerPost(data=request.data)
         if serializer.is_valid():
             player_id = serializer.validated_data["player"]
-            try:
-                player_hand = PlayerHand.objects.get(player__id=player_id, game=game)
-            except PlayerHand.DoesNotExist:
-                return Response(
-                    {"error": f"player {player_id} does not play in this game"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            player_hand = self.get_player_hand(player_id, game)
             player_hand.number_of_cards += serializer.validated_data["number_of_cards"]
             player_hand.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CardRevealedSerializerAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class CardRevealedSerializerAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         serializer = CardRetrievedSerializerPost(data=request.data)
         if serializer.is_valid():
             player_id = serializer.validated_data["player"]
             card_id = serializer.validated_data["card"]
-            try:
-                player_hand = PlayerHand.objects.get(player__id=player_id, game=game)
-            except PlayerHand.DoesNotExist:
-                return Response(
-                    {"error": f"player {player_id} does not play in this game"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            try:
-                card = Card.objects.get(id=card_id)
-            except Card.DoesNotExist:
-                return Response(
-                    {"error": f"card {card_id} does not exist"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            player_hand = self.get_player_hand(player_id, game)
+            card = self.get_card(card_id)
             if card not in get_cards_to_reveal(game):
                 return Response(
-                    {"error": f"card {card_id} can not be revealed"},
+                    {"detail": f"card {card_id} can not be revealed"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():
@@ -386,37 +331,19 @@ class CardRevealedSerializerAPIView(APIView):  # type: ignore[misc]
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CardUnrevealedSerializerAPIView(APIView):  # type: ignore[misc]
-    def post(self, request: Request, game_id: str) -> Response:
+class CardUnrevealedSerializerAPIView(BaseAPIView):
+    def post(self, request: Request, game_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
-        try:
-            game = Game.objects.get(user=request.user, id=game_id)
-        except Game.DoesNotExist:
-            return Response(
-                {"error": f"game {game_id} does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        game = self.get_game(request.user, game_id)
         serializer = CardRetrievedSerializerPost(data=request.data)
         if serializer.is_valid():
             player_id = serializer.validated_data["player"]
             card_id = serializer.validated_data["card"]
-            try:
-                player_hand = PlayerHand.objects.get(player__id=player_id, game=game)
-            except PlayerHand.DoesNotExist:
-                return Response(
-                    {"error": f"player {player_id} does not play in this game"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            try:
-                card = Card.objects.get(id=card_id)
-            except Card.DoesNotExist:
-                return Response(
-                    {"error": f"card {card_id} does not exist"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            player_hand = self.get_player_hand(player_id, game)
+            card = self.get_card(card_id)
             if card not in player_hand.cards.all():
                 return Response(
-                    {"error": f"card {card_id} can not be unrevealed"},
+                    {"detail": f"card {card_id} can not be unrevealed"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():

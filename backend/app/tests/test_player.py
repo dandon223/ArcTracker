@@ -25,7 +25,7 @@ class PlayerAPITests(APITestCase):  # type: ignore[misc]
         Player.objects.create(nick="a", user=self.user)
         response = self.client.post(self.url, {"nick": "a"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "player a already exist")
+        self.assertEqual(response.data["detail"], "player a already exist")
 
     def test_player_post_duplicated_nick_in_database(self) -> None:
         Player.objects.create(nick="a", user=self.user_two)
@@ -51,4 +51,4 @@ class PlayerAPITests(APITestCase):  # type: ignore[misc]
     def test_player_get_no_player(self) -> None:
         response = self.client.get(self.url, {"nick": "a"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], "player a does not exist")
+        self.assertEqual(response.data["detail"], "player a does not exist")

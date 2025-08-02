@@ -50,7 +50,7 @@ class GameAPITests(APITestCase):  # type: ignore[misc]
                     new_data["players"].append(self.get_player_id(player_nick, self.user))  # type: ignore[attr-defined]
                 response = self.client.post(self.url, new_data)
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-                self.assertEqual(response.data["error"], "game has to have from 2 to 4 players")
+                self.assertEqual(response.data["detail"], "game has to have from 2 to 4 players")
 
     def test_game_post_already_created(self) -> None:
         Game.objects.create(name="a", user=self.user)
@@ -59,7 +59,7 @@ class GameAPITests(APITestCase):  # type: ignore[misc]
             new_data["players"].append(self.get_player_id(player_nick, self.user))  # type: ignore[attr-defined]
         response = self.client.post(self.url, new_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "game a already exist")
+        self.assertEqual(response.data["detail"], "game a already exist")
 
     def test_game_post_duplcated_name_in_database(self) -> None:
         Game.objects.create(name="a", user=self.user_two)
@@ -88,4 +88,4 @@ class GameAPITests(APITestCase):  # type: ignore[misc]
     def test_game_get_no_player(self) -> None:
         response = self.client.get(self.url, {"name": "a"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], "game a does not exist")
+        self.assertEqual(response.data["detail"], "game a does not exist")

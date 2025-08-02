@@ -39,7 +39,7 @@ class GameRoundAPITests(APITestCase):  # type: ignore[misc]
         GameRound.objects.create(game=game, chapter=1, round=1)
         response = self.client.get(self.get_game_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
 
 class RoundCreateAPITests(APITestCase):  # type: ignore[misc]
@@ -86,13 +86,13 @@ class RoundCreateAPITests(APITestCase):  # type: ignore[misc]
             CardPlayedInRound.objects.create(player=player, game_round=game_round, number_of_cards_face_down=1)
         response = self.client.post(self.get_create_round_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "not all players that have cards played in this round")
+        self.assertEqual(response.data["detail"], "not all players that have cards played in this round")
 
     def test_create_round_post_game_not_exists(self) -> None:
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.post(self.get_create_round_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
 
 class ChapterCreateAPITests(APITestCase):  # type: ignore[misc]
@@ -139,13 +139,13 @@ class ChapterCreateAPITests(APITestCase):  # type: ignore[misc]
                 CardPlayedInRound.objects.create(player=player, game_round=game_round, number_of_cards_face_down=1)
         response = self.client.post(self.get_create_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error"], "not all players have 0 cards")
+        self.assertEqual(response.data["detail"], "not all players have 0 cards")
 
     def test_create_chapter_post_game_not_exists(self) -> None:
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.post(self.get_create_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
 
 class LatestChapterAPITests(APITestCase):  # type: ignore[misc]
@@ -176,4 +176,4 @@ class LatestChapterAPITests(APITestCase):  # type: ignore[misc]
         game = Game.objects.create(name="a", user=self.user_two)
         response = self.client.get(self.get_latest_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], f"game {game.id} does not exist")
+        self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
