@@ -15,8 +15,8 @@ from .models import Card, CardPlayedInRound, Game, GameRound, Player, PlayerHand
 from .serializers import (
     CardPlayedInRoundSerializerGet,
     CardPlayedInRoundSerializerPost,
-    CardRetrievedSerializerPost,
     CardSerializerGet,
+    CardSerializerPost,
     GameRoundSerializerGet,
     GameSerializerGet,
     GameSerializerPost,
@@ -72,7 +72,7 @@ class RegisterAPIView(APIView):  # type: ignore[misc]
 
     def post(self, request: Request) -> Response:
         serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -94,7 +94,7 @@ class PlayerAPIView(BaseAPIView):
     def post(self, request: Request) -> Response:
         assert isinstance(request.user, auth_models.User)
         serializer = PlayerSerializerPost(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             if Player.objects.filter(nick=serializer.validated_data["nick"], user=request.user).exists():
                 return Response(
                     {"detail": f"player {serializer.validated_data['nick']} already exist"},
@@ -121,7 +121,7 @@ class GameAPIView(BaseAPIView):
     def post(self, request: Request) -> Response:
         assert isinstance(request.user, auth_models.User)
         serializer = GameSerializerPost(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             if Game.objects.filter(name=serializer.validated_data["name"], user=request.user).exists():
                 return Response(
                     {"detail": f"game {serializer.validated_data['name']} already exist"},
@@ -192,15 +192,18 @@ class LatestChapterAPIView(BaseAPIView):
         game = self.get_game(request.user, game_id)
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
-        return Response({"chapter": latest_round.chapter})
+        return Response({"chapter": latest_round.chapter, "round": latest_round.round})
 
 
 class CardPlayedInRoundAPIView(BaseAPIView):
-    def get(self, request: Request, game_id: uuid.UUID) -> Response:
+    def get(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
+        player = self.get_player(request.user, player_id)
+        self.get_player_hand(player_id, game)
         chapter_param = request.query_params.get("chapter")
-        filters: Dict[str, Any] = {"game_round__game": game}
+        round_param = request.query_params.get("round")
+        filters: Dict[str, Any] = {"game_round__game": game, "player": player}
         if chapter_param:
             try:
                 chapter = int(chapter_param)
@@ -210,34 +213,36 @@ class CardPlayedInRoundAPIView(BaseAPIView):
                     {"detail": "chapter must be an integer"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+        if round_param:
+            try:
+                _round = int(round_param)
+                filters["game_round__round"] = _round
+            except ValueError:
+                return Response(
+                    {"detail": "round must be an integer"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         cards_played_in_round = CardPlayedInRound.objects.filter(**filters)
         serializer = CardPlayedInRoundSerializerGet(cards_played_in_round, many=True)
         return Response(serializer.data)
 
-    def post(self, request: Request, game_id: uuid.UUID) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
+        player = self.get_player(request.user, player_id)
+        player_hand = self.get_player_hand(player_id, game)
         serializer = CardPlayedInRoundSerializerPost(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
             assert latest_round is not None
-            if CardPlayedInRound.objects.filter(
-                game_round=latest_round, player=serializer.validated_data["player"]
-            ).exists():
+            if CardPlayedInRound.objects.filter(game_round=latest_round, player=player).exists():
                 return Response(
-                    {"detail": f"player {serializer.validated_data['player'].id} played card this round"},
+                    {"detail": f"player {player.id} played card this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            player = Player.objects.get(id=serializer.validated_data["player"].id)
             with transaction.atomic():
-                card_played = serializer.save(game_round=latest_round)
+                card_played = serializer.save(player=player, game_round=latest_round)
                 assert isinstance(card_played, CardPlayedInRound)
-                if not PlayerHand.objects.filter(player=card_played.player, game=game).exists():
-                    return Response(
-                        {"detail": f"player {card_played.player.id} does not play in this game"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                player_hand = PlayerHand.objects.get(player=card_played.player, game=game)
                 if card_played.card_face_up:
                     if card_played.card_face_up not in get_cards_to_play(game, player):
                         return Response(
@@ -250,7 +255,6 @@ class CardPlayedInRoundAPIView(BaseAPIView):
                 player_hand.number_of_cards -= card_played.number_of_cards_face_down
                 player_hand.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -270,20 +274,18 @@ class CardAPIView(APIView):  # type: ignore[misc]
 
 
 class CardRetrievedSerializerAPIView(BaseAPIView):
-    def post(self, request: Request, game_id: uuid.UUID) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
-        serializer = CardRetrievedSerializerPost(data=request.data)
-        if serializer.is_valid():
-            player_id = serializer.validated_data["player"]
-            card_id = serializer.validated_data["card"]
-            player_hand = self.get_player_hand(player_id, game)
-            card = self.get_card(card_id)
+        player_hand = self.get_player_hand(player_id, game)
+        serializer = CardSerializerPost(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            card: Card = serializer.validated_data["card"]
             latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
             assert latest_round is not None
             if card not in get_cards_to_retrieve(game, latest_round.chapter, latest_round.round):
                 return Response(
-                    {"detail": f"card {card_id} can not be retrieved"},
+                    {"detail": f"card {card.id} can not be retrieved"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             player_hand.number_of_cards += 1
@@ -294,13 +296,12 @@ class CardRetrievedSerializerAPIView(BaseAPIView):
 
 
 class NumberOfCardsAddedSerializerAPIView(BaseAPIView):
-    def post(self, request: Request, game_id: uuid.UUID) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
+        player_hand = self.get_player_hand(player_id, game)
         serializer = NumberOfCardsAddedSerializerPost(data=request.data)
-        if serializer.is_valid():
-            player_id = serializer.validated_data["player"]
-            player_hand = self.get_player_hand(player_id, game)
+        if serializer.is_valid(raise_exception=True):
             player_hand.number_of_cards += serializer.validated_data["number_of_cards"]
             player_hand.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -308,18 +309,16 @@ class NumberOfCardsAddedSerializerAPIView(BaseAPIView):
 
 
 class CardRevealedSerializerAPIView(BaseAPIView):
-    def post(self, request: Request, game_id: uuid.UUID) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
-        serializer = CardRetrievedSerializerPost(data=request.data)
-        if serializer.is_valid():
-            player_id = serializer.validated_data["player"]
-            card_id = serializer.validated_data["card"]
-            player_hand = self.get_player_hand(player_id, game)
-            card = self.get_card(card_id)
+        player_hand = self.get_player_hand(player_id, game)
+        serializer = CardSerializerPost(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            card: Card = serializer.validated_data["card"]
             if card not in get_cards_to_reveal(game):
                 return Response(
-                    {"detail": f"card {card_id} can not be revealed"},
+                    {"detail": f"card {card.id} can not be revealed"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():
@@ -332,18 +331,16 @@ class CardRevealedSerializerAPIView(BaseAPIView):
 
 
 class CardUnrevealedSerializerAPIView(BaseAPIView):
-    def post(self, request: Request, game_id: uuid.UUID) -> Response:
+    def post(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
         game = self.get_game(request.user, game_id)
-        serializer = CardRetrievedSerializerPost(data=request.data)
-        if serializer.is_valid():
-            player_id = serializer.validated_data["player"]
-            card_id = serializer.validated_data["card"]
-            player_hand = self.get_player_hand(player_id, game)
-            card = self.get_card(card_id)
+        player_hand = self.get_player_hand(player_id, game)
+        serializer = CardSerializerPost(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            card: Card = serializer.validated_data["card"]
             if card not in player_hand.cards.all():
                 return Response(
-                    {"detail": f"card {card_id} can not be unrevealed"},
+                    {"detail": f"card {card.id} can not be unrevealed"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():

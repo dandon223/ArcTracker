@@ -53,7 +53,7 @@ class GameRoundSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
 class CardPlayedInRoundSerializerPost(serializers.ModelSerializer):  # type: ignore[misc]
     class Meta:
         model = CardPlayedInRound
-        fields = ["player", "card_face_up", "number_of_cards_face_down"]
+        fields = ["card_face_up", "number_of_cards_face_down"]
 
     def validate(self, attrs):  # type: ignore[no-untyped-def]
         instance = CardPlayedInRound(**attrs)
@@ -73,20 +73,14 @@ class CardSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
         fields = ["id", "suit", "number"]
 
 
-class CardRetrievedSerializerPost(serializers.Serializer):  # type: ignore[misc]
-    player = serializers.UUIDField()
-    card = serializers.UUIDField()
-
-    def update(self, instance: Any, validated_data: Any) -> Any:
-        raise NotImplementedError("Update is not supported.")
-
-    def create(self, validated_data: Any) -> Any:
-        raise NotImplementedError("Create is not supported.")
+class CardSerializerPost(serializers.ModelSerializer):  # type: ignore[misc]
+    class Meta:
+        model = Card
+        fields = ["id"]
 
 
 class NumberOfCardsAddedSerializerPost(serializers.Serializer):  # type: ignore[misc]
-    player = serializers.UUIDField()
-    number_of_card = serializers.IntegerField()
+    number_of_cards = serializers.IntegerField()
 
     def validate(self, attrs):  # type: ignore[no-untyped-def]
         if attrs["number_of_card"] <= 0:

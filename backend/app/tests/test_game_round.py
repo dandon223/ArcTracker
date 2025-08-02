@@ -171,6 +171,7 @@ class LatestChapterAPITests(APITestCase):  # type: ignore[misc]
         response = self.client.get(self.get_latest_chapter_url(game.id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["chapter"], 1)
+        self.assertEqual(response.data["round"], 1)
 
     def test_latest_chapter_game_not_exists(self) -> None:
         game = Game.objects.create(name="a", user=self.user_two)
