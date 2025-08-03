@@ -36,7 +36,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
             game.players.set(players[:3])
             prepare_new_game(game)
 
-    def test_card_played_in_round_get(self) -> None:
+    def test_play_card_get(self) -> None:
         game = Game.objects.first()
         assert game is not None
         game_round = GameRound.objects.first()
@@ -48,7 +48,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
-    def test_card_played_in_round_get_chapter(self) -> None:
+    def test_play_card_get_chapter(self) -> None:
         game = Game.objects.first()
         assert game is not None
         game_round = GameRound.objects.first()
@@ -60,7 +60,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
-    def test_card_played_in_round_get_chapter_not_number(self) -> None:
+    def test_play_card_get_chapter_not_number(self) -> None:
         game = Game.objects.first()
         assert game is not None
         player = game.players.first()
@@ -69,14 +69,14 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "chapter must be an integer")
 
-    def test_card_played_in_round_get_game_not_exists(self) -> None:
+    def test_play_card_get_game_not_exists(self) -> None:
         game = Game.objects.create(name="b", user=self.user_two)
         player_id = self.get_player_id("a", self.user)
         response = self.client.get(self.get_card_played_in_round_url(game.id, player_id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
-    def test_card_played_in_round_get_player_not_in_game(self) -> None:
+    def test_play_card_get_player_not_in_game(self) -> None:
         game = Game.objects.first()
         assert game is not None
         player_id = self.get_player_id("e", self.user)
@@ -84,7 +84,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], f"player {player_id} does not play in this game")
 
-    def test_card_played_in_round_post(self) -> None:
+    def test_play_card_post(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -94,7 +94,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         response = self.client.post(self.get_card_played_in_round_url(game.id, player_id), data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_card_played_in_round_post_game_not_exists(self) -> None:
+    def test_play_card_post_game_not_exists(self) -> None:
         game = Game.objects.create(name="b", user=self.user_two)
         player_id = self.get_player_id("a", self.user)
         data = {"number_of_cards_face_down": 2}
@@ -102,7 +102,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], f"game {game.id} does not exist")
 
-    def test_card_played_in_round_post_already_played(self) -> None:
+    def test_play_card_post_already_played(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -115,7 +115,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], f"player {player_id} played card this round")
 
-    def test_card_played_in_round_post_card_was_already_played(self) -> None:
+    def test_play_card_post_card_was_already_played(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -129,7 +129,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], f"card {card.id} was already played face up")
 
-    def test_card_played_in_round_post_wrong_number_of_cards_one(self) -> None:
+    def test_play_card_post_wrong_number_of_cards_one(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -143,7 +143,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
             "non_field_errors: with played card face up you can only play up to one card face down",
         )
 
-    def test_card_played_in_round_post_wrong_number_of_cards_two(self) -> None:
+    def test_play_card_post_wrong_number_of_cards_two(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -154,7 +154,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], 'number_of_cards_face_down: "3" is not a valid choice.')
 
-    def test_card_played_in_round_post_wrong_number_of_cards_three(self) -> None:
+    def test_play_card_post_wrong_number_of_cards_three(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
@@ -164,7 +164,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "non_field_errors: you have to play atleast one card")
 
-    def test_card_played_in_round_post_wrong_player(self) -> None:
+    def test_play_card_post_wrong_player(self) -> None:
         game = Game.objects.first()
         assert game is not None
         card = Card.objects.first()
