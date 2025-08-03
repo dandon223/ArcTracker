@@ -1,5 +1,5 @@
 flake8 = flake8 --require-plugins darglint,flake8,flake8-rst-docstrings,flake8-pyproject,mccabe,pycodestyle,pyflakes
-
+TEST_TARGET ?= 
 format:
 	isort .
 	black .
@@ -9,7 +9,7 @@ format_check:
 	black . --check
 
 test:
-	python manage.py test
+	python manage.py test $(TEST_TARGET)
 
 check: format_check
 	mypy . 

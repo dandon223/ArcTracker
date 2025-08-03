@@ -269,8 +269,10 @@ class CardAPIView(APIView):  # type: ignore[misc]
         if number:
             filters["number"] = number
         cards = Card.objects.filter(**filters)
+        if len(cards) == 0:
+            return Response({"detail": "no card found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = CardSerializerGet(cards, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CardRetrievedSerializerAPIView(BaseAPIView):
