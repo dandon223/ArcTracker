@@ -13,15 +13,15 @@ from ..models import Card, Game, GameRound, Player, PlayerHand
 User = get_user_model()
 
 
-class RevealCardAPITests(APITestCase):  # type: ignore[misc]
+class UnrevealCardAPITests(APITestCase):  # type: ignore[misc]
 
     fixtures = ["app/initial_data/initial_data.json"]
 
     def get_player_id(self, nick: str, user: Any) -> uuid.UUID:
         return Player.objects.get(nick=nick, user=user).id
 
-    def get_reveal_card_url(self, game_id: uuid.UUID, player_id: uuid.UUID) -> str:
-        return reverse("reveal-card", kwargs={"game_id": str(game_id), "player_id": str(player_id)})
+    def get_unreveal_card_url(self, game_id: uuid.UUID, player_id: uuid.UUID) -> str:
+        return reverse("unreveal-card", kwargs={"game_id": str(game_id), "player_id": str(player_id)})
 
     def setUp(self) -> None:
         self.client = APIClient()
@@ -36,35 +36,36 @@ class RevealCardAPITests(APITestCase):  # type: ignore[misc]
             game.players.set(players[:3])
             prepare_new_game(game)
 
-    def test_reveal_card_post(self) -> None:
+    def test_unreveal_card_post(self) -> None:
         game = Game.objects.first()
         assert game is not None
         game_round = GameRound.objects.first()
         assert game_round is not None
         players = game.players.all()
         player = players[0]
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
-        response = self.client.post(self.get_reveal_card_url(game.id, player.id), {"id": card.id})
         player_hand = PlayerHand.objects.get(game=game, player_id=player.id)
+        player_hand.cards.add(card)
+        player_hand.save()
+        game.cards_not_played.remove(card)
+        game.save()
+        response = self.client.post(self.get_unreveal_card_url(game.id, player.id), {"id": card.id})
         player_cards = player_hand.cards.all()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(player_hand.number_of_cards, 6)
-        self.assertEqual(len(player_cards), 1)
-        self.assertEqual(player_cards[0].id, card.id)
-        self.assertEqual(len(game.cards_not_played.all()), 19)
+        self.assertEqual(len(player_cards), 0)
+        self.assertEqual(len(game.cards_not_played.all()), 20)
 
-    def test_reveal_card_post_already_played(self) -> None:
+    def test_unreveal_card_post_already_played(self) -> None:
         game = Game.objects.first()
         assert game is not None
         game_round = GameRound.objects.first()
         assert game_round is not None
-        players = game.players.all()
-        player = players[0]
-        player_two = players[1]
+        player = game.players.first()
+        assert player is not None
         card = Card.objects.first()
         assert card is not None
-        self.client.post(self.get_reveal_card_url(game.id, player.id), {"id": card.id})
-        response = self.client.post(self.get_reveal_card_url(game.id, player_two.id), {"id": card.id})
+        response = self.client.post(self.get_unreveal_card_url(game.id, player.id), {"id": card.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], f"card {card.id} can not be revealed")
+        self.assertEqual(response.data["detail"], f"card {card.id} can not be unrevealed")
