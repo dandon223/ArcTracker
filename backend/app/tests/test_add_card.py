@@ -54,14 +54,14 @@ class AddCardAPITests(APITestCase):  # type: ignore[misc]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], f"player {player_id} does not play in this game")
 
-    def test_add_card_post_negative(self) -> None:
+    def test_add_card_post_not_number(self) -> None:
         game = Game.objects.first()
         assert game is not None
         player_id = self.get_player_id("a", self.user)
-        data = {"number_of_cards": -1}
+        data = {"number_of_cards": "a"}
         response = self.client.post(self.get_add_card_url(game.id, player_id), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "error: number_of_cards must be greater than zero")
+        self.assertEqual(response.data["detail"], "number_of_cards: A valid integer is required.")
 
     def test_add_card_post_game_not_exists(self) -> None:
         game = Game.objects.create(name="b", user=self.user_two)

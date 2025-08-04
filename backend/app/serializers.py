@@ -86,11 +86,6 @@ class CardSerializerPost(serializers.Serializer):  # type: ignore[misc]
 class NumberOfCardsAddedSerializerPost(serializers.Serializer):  # type: ignore[misc]
     number_of_cards = serializers.IntegerField()
 
-    def validate(self, attrs):  # type: ignore[no-untyped-def]
-        if attrs["number_of_cards"] <= 0:
-            raise serializers.ValidationError({"error": "number_of_cards must be greater than zero"})
-        return attrs
-
     def update(self, instance: Any, validated_data: Any) -> Any:
         raise NotImplementedError("Update is not supported.")
 

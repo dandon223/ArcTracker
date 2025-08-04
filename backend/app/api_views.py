@@ -324,9 +324,7 @@ class CardRevealedSerializerAPIView(BaseAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():
-                player_hand.number_of_cards += 1
                 player_hand.cards.add(card)
-                player_hand.save()
                 game.cards_not_played.remove(card)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
