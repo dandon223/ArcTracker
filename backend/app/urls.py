@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -18,4 +18,5 @@ urlpatterns = [
         views.new_action_view,
         name="new_action",
     ),
+    path("api/", include("app.api_urls")),
 ]

@@ -91,7 +91,7 @@ def get_cards_to_reveal(game: Game) -> QuerySet[Card]:
 
 
 def get_cards_to_retrieve(game: Game, chapter_number: int, round_number: int) -> QuerySet[Card]:
-    """Returns cards that we believe the player can retrieve in this round (played cars in active round face up)
+    """Returns cards that we believe the player can retrieve in this round (played card in active round face up)
 
     :param game: Game object
     :param chapter_number: game chapter

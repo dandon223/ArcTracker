@@ -1,4 +1,4 @@
-name: Code Quality
+name: Code Tests
 
 on: [push]
 
@@ -18,7 +18,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Analysing the backend code with checkers
+    - name: Run tests
       run: |
         cd backend
-        make check
+        make restart
+        make initial_data
+        make test

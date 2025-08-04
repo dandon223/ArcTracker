@@ -103,6 +103,6 @@ class CardPlayedInRound(models.Model):
 
     def clean(self) -> None:
         if self.card_face_up is not None and self.number_of_cards_face_down == CardsPlayedFaceDown.TWO:
-            raise ValidationError("With played card face up you can only play up to one card face down.")
+            raise ValidationError("with played card face up you can only play up to one card face down")
         if self.card_face_up is None and self.number_of_cards_face_down == CardsPlayedFaceDown.ZERO:
-            raise ValidationError("You have to play atleast one card.")
+            raise ValidationError("you have to play atleast one card")
