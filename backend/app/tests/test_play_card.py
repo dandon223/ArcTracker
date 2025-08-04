@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from ..api_views_logic import prepare_new_game
-from ..models import Card, CardPlayedInRound, Game, GameRound, Player
+from ..models import CardPlayedInRound, Game, GameRound, Player
 
 User = get_user_model()
 
@@ -87,7 +87,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         data = {"card_face_up": card.id}
@@ -105,7 +105,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_already_played(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         data = {"card_face_up": card.id}
@@ -118,7 +118,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_card_was_already_played(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         data = {"card_face_up": card.id}
@@ -132,7 +132,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_wrong_number_of_cards_one(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         data = {"card_face_up": card.id, "number_of_cards_face_down": 2}
@@ -146,7 +146,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_wrong_number_of_cards_two(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         data = {"number_of_cards_face_down": 3}
@@ -157,7 +157,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_wrong_number_of_cards_three(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("a", self.user)
         response = self.client.post(self.get_card_played_in_round_url(game.id, player_id), {})
@@ -167,7 +167,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
     def test_play_card_post_wrong_player(self) -> None:
         game = Game.objects.first()
         assert game is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         player_id = self.get_player_id("e", self.user)
         data = {"card_face_up": card.id}

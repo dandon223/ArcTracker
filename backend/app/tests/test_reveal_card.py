@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from ..api_views_logic import prepare_new_game
-from ..models import Card, Game, GameRound, Player, PlayerHand
+from ..models import Game, GameRound, Player, PlayerHand
 
 User = get_user_model()
 
@@ -43,7 +43,7 @@ class RevealCardAPITests(APITestCase):  # type: ignore[misc]
         assert game_round is not None
         players = game.players.all()
         player = players[0]
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         response = self.client.post(self.get_reveal_card_url(game.id, player.id), {"id": card.id})
         player_hand = PlayerHand.objects.get(game=game, player_id=player.id)
@@ -62,7 +62,7 @@ class RevealCardAPITests(APITestCase):  # type: ignore[misc]
         players = game.players.all()
         player = players[0]
         player_two = players[1]
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         self.client.post(self.get_reveal_card_url(game.id, player.id), {"id": card.id})
         response = self.client.post(self.get_reveal_card_url(game.id, player_two.id), {"id": card.id})

@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from ..api_views_logic import prepare_new_game
-from ..models import Card, Game, GameRound, Player, PlayerHand
+from ..models import Game, GameRound, Player, PlayerHand
 
 User = get_user_model()
 
@@ -64,7 +64,7 @@ class UnrevealCardAPITests(APITestCase):  # type: ignore[misc]
         assert game_round is not None
         player = game.players.first()
         assert player is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         response = self.client.post(self.get_unreveal_card_url(game.id, player.id), {"id": card.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

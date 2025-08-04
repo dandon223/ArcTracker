@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from ..api_views_logic import prepare_new_game
-from ..models import Card, CardPlayedInRound, Game, GameRound, Player, PlayerHand
+from ..models import CardPlayedInRound, Game, GameRound, Player, PlayerHand
 
 User = get_user_model()
 
@@ -44,7 +44,7 @@ class RetrieveCardAPITests(APITestCase):  # type: ignore[misc]
         players = game.players.all()
         player = players[0]
         player_two = players[1]
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         CardPlayedInRound.objects.create(player=player, game_round=game_round, card_face_up=card)
         response = self.client.post(self.get_retrieve_card_url(game.id, player_two.id), {"id": card.id})
@@ -63,7 +63,7 @@ class RetrieveCardAPITests(APITestCase):  # type: ignore[misc]
         players = game.players.all()
         player = players[0]
         player_two = players[1]
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         CardPlayedInRound.objects.create(player=player, game_round=game_round, card_face_up=card)
         self.client.post(self.get_retrieve_card_url(game.id, player.id), {"id": card.id})
@@ -78,7 +78,7 @@ class RetrieveCardAPITests(APITestCase):  # type: ignore[misc]
         assert game_round is not None
         player = game.players.first()
         assert player is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         CardPlayedInRound.objects.create(player=player, game_round=game_round, card_face_up=card)
         GameRound.objects.create(game=game, chapter=2, round=1)
@@ -93,7 +93,7 @@ class RetrieveCardAPITests(APITestCase):  # type: ignore[misc]
         assert game_round is not None
         player = game.players.first()
         assert player is not None
-        card = Card.objects.first()
+        card = game.cards_not_played.first()
         assert card is not None
         CardPlayedInRound.objects.create(player=player, game_round=game_round, card_face_up=card)
         GameRound.objects.create(game=game, chapter=1, round=2)
