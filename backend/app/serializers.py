@@ -73,10 +73,14 @@ class CardSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
         fields = ["id", "suit", "number"]
 
 
-class CardSerializerPost(serializers.ModelSerializer):  # type: ignore[misc]
-    class Meta:
-        model = Card
-        fields = ["id"]
+class CardSerializerPost(serializers.Serializer):  # type: ignore[misc]
+    id = serializers.PrimaryKeyRelatedField(queryset=Card.objects.all())
+
+    def update(self, instance: Any, validated_data: Any) -> Any:
+        raise NotImplementedError("Update is not supported.")
+
+    def create(self, validated_data: Any) -> Any:
+        raise NotImplementedError("Create is not supported.")
 
 
 class NumberOfCardsAddedSerializerPost(serializers.Serializer):  # type: ignore[misc]

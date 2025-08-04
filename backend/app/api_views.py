@@ -282,7 +282,7 @@ class CardRetrievedSerializerAPIView(BaseAPIView):
         player_hand = self.get_player_hand(player_id, game)
         serializer = CardSerializerPost(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            card: Card = serializer.validated_data["card"]
+            card: Card = serializer.validated_data["id"]
             latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
             assert latest_round is not None
             if card not in get_cards_to_retrieve(game, latest_round.chapter, latest_round.round):
@@ -317,7 +317,7 @@ class CardRevealedSerializerAPIView(BaseAPIView):
         player_hand = self.get_player_hand(player_id, game)
         serializer = CardSerializerPost(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            card: Card = serializer.validated_data["card"]
+            card: Card = serializer.validated_data["id"]
             if card not in get_cards_to_reveal(game):
                 return Response(
                     {"detail": f"card {card.id} can not be revealed"},
@@ -339,7 +339,7 @@ class CardUnrevealedSerializerAPIView(BaseAPIView):
         player_hand = self.get_player_hand(player_id, game)
         serializer = CardSerializerPost(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            card: Card = serializer.validated_data["card"]
+            card: Card = serializer.validated_data["id"]
             if card not in player_hand.cards.all():
                 return Response(
                     {"detail": f"card {card.id} can not be unrevealed"},
