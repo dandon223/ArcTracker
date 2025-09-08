@@ -30,3 +30,18 @@ To upload changes to model run:
 ```
 make full_restart
 ```
+To test:
+```
+make format
+make check
+make test
+```
+
+## Frontend
+To run it locally perform this steps:
+```
+nvm use --lts
+npm create vite@latest
+npm install
+npm run dev
+```
