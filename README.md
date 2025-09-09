@@ -11,14 +11,6 @@ source .venvs/arc_tracker/bin/activate
 pip install -r requirements.txt
 ```
 
-## Documentation
-
-Documentations is written in sphinx-needs.
-```
-make docs
-```
-Next open ```docs/_build/html/index.html``` file.
-
 ## Backend
 To run it locally perform this steps:
 ```
