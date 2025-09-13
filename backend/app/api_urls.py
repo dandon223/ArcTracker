@@ -11,14 +11,22 @@ from .api_views import (
     GameAPIView,
     GameRoundAPIView,
     LatestChapterAPIView,
+    LoginAPIView,
+    LogoutAPIView,
     NumberOfCardsAddedSerializerAPIView,
     PlayerAPIView,
     RegisterAPIView,
     RoundCreateAPIView,
+    csrf,
+    meAPIView,
 )
 
 urlpatterns = [
+    path("csrf/", csrf, name="csrf"),
     path("register/", RegisterAPIView.as_view(), name="register"),
+    path("login/", LoginAPIView.as_view(), name="login"),
+    path("logout/", LogoutAPIView.as_view(), name="logout"),
+    path("me/", meAPIView.as_view(), name="me"),
     path("token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("cards/", CardAPIView.as_view(), name="cards"),
