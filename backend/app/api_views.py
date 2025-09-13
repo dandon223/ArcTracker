@@ -1,8 +1,11 @@
 import uuid
 from typing import Any, Dict
 
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import models as auth_models
 from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny
@@ -26,6 +29,11 @@ from .serializers import (
     RegisterSerializer,
 )
 from .views_logic import get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
+
+
+@ensure_csrf_cookie
+def csrf(request: Request) -> JsonResponse:
+    return JsonResponse({"detail": "CSRF cookie set"})
 
 
 class BaseAPIView(APIView):  # type: ignore[misc]
@@ -74,8 +82,45 @@ class RegisterAPIView(APIView):  # type: ignore[misc]
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+            username = serializer.validated_data.get("username")
+            password = serializer.validated_data.get("password")
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)  # ✅ creates session
+            return Response(
+                {"message": "User created successfully", "username": username}, status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class meAPIView(APIView):  # type: ignore[misc]
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> Response:
+        if request.user.is_authenticated:
+            return Response({"username": request.user.username})
+        return Response({"username": None})
+
+
+class LoginAPIView(APIView):  # type: ignore[misc]
+    permission_classes = [AllowAny]
+
+    def post(self, request: Request) -> Response:
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return Response({"success": True, "username": user.username})
+        return Response({"success": False, "error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutAPIView(APIView):  # type: ignore[misc]
+    def post(self, request: Request) -> Response:
+        logout(request)
+        return Response({"success": True})
 
 
 class PlayerAPIView(BaseAPIView):
