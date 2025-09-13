@@ -14,16 +14,6 @@ export default function Register(props) {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!username.trim()) {
-      alert("Username is required");
-      return;
-    }
-
-    if (!password.trim()) {
-      alert("Password is required");
-      return;
-    }
-
     if (password !== password2) {
       alert("Passwords do not match");
       return;
@@ -57,26 +47,41 @@ export default function Register(props) {
   };
 
   return (
-    <form onSubmit={handleRegister}>
+  <form className="registerForm" onSubmit={handleRegister}>
+    <div className="formRow">
+      <label>Username:</label>
       <input
         type="text"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
+        onChange={(e) => setUsername(e.target.value.trim())}
+        placeholder="username"
+        required
       />
+    </div>
+
+    <div className="formRow">
+      <label>Password:</label>
       <input
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value.trim())}
+        placeholder="password"
+        required
       />
+    </div>
+
+    <div className="formRow">
+      <label>Repeat Password:</label>
       <input
         type="password"
         value={password2}
-        onChange={(e) => setPassword2(e.target.value)}
-        placeholder="Repeat Password"
+        onChange={(e) => setPassword2(e.target.value.trim())}
+        placeholder="repeat password"
+        required
       />
-      <button type="submit">Register</button>
-    </form>
+    </div>
+
+    <button className="button" type="submit">Register</button>
+  </form>
   );
 }

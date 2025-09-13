@@ -32,20 +32,30 @@ export default function Login(props) {
   };
 
   return (
-    <form onSubmit={handleLogin}>
+  <form className="loginForm" onSubmit={handleLogin}>
+    <div className="formRow">
+      <label>Username:</label>
       <input
         type="text"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
+        onChange={(e) => setUsername(e.target.value.trim())}
+        placeholder="username"
+        required
       />
+    </div>
+
+    <div className="formRow">
+      <label>Password:</label>
       <input
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value.trim())}
+        placeholder="password"
+        required
       />
-      <button type="submit">Login</button>
-    </form>
+    </div>
+
+    <button className="button" type="submit">Login</button>
+  </form>
   );
 }

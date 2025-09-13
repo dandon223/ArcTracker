@@ -40,7 +40,7 @@ export default function App() {
   return (
     <Router>
       <Header user={user} onLogout={handleLogout} />
-      <main className="p-4">
+      <main>
         <Routes>
           <Route
             path="/"
@@ -49,10 +49,7 @@ export default function App() {
                 {user ? (
                   <p>Welcome, {user}!</p>
                 ) : (
-                  <p>
-                    <Link to="/login">Login</Link> or{" "}
-                    <Link to="/register">Register</Link>
-                  </p>
+                  null
                 )}
               </div>
             }

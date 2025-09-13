@@ -15,6 +15,9 @@ header, main {
 }
 
 header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: linear-gradient(to right, #111, #2a0a3c, #111);
   padding: 12px 20px;
   border-bottom: 2px solid #5d2b90;
@@ -38,4 +41,55 @@ main {
   border-radius: 12px;
   padding: 20px;
   margin: 0 20px;
+}
+
+.registerForm, .loginForm {
+  width: 450px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
+}
+
+.formRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.formRow label {
+  width: 140px;       /* fixed width for labels */
+  margin-right: 10px;
+  font-weight: bold;
+  color: #262626;
+}
+
+.formRow input {
+  flex: 1;            /* input takes remaining space */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.button {
+  padding: 10px 16px;
+  background-color: #4CAF50; /* default green */
+  color: white;
+  text-decoration: none; /* for links */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: inline-block; /* for <a> links to behave like buttons */
+  text-align: center;
+}
+
+.button:hover {
+  background-color: #45a049;
+}
+
+.loginHeader {
+  margin-right: 10px;
 }
