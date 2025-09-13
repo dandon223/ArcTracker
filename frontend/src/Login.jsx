@@ -23,6 +23,10 @@ export default function Login(props) {
       credentials: "include", // important for session cookies
     });
     const data = await response.json();
+    if (!response.ok) {
+      alert("Login failed. Please check your input.");
+      return;
+    }
     props.setUser(data.username);
     navigate("/");
   };

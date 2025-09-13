@@ -13,7 +13,7 @@ def custom_exception_handler(exc: Any, context: Any) -> Any:
         if isinstance(message, list):
             detail = " ".join(str(m) for m in message)
         elif isinstance(message, dict):
-            detail = "; ".join(f"{field}: {' '.join(map(str, msgs))}" for field, msgs in message.items())
+            detail = " ".join(f"{field}: {' '.join(map(str, msgs))}" for field, msgs in message.items())
         else:
             detail = str(message)
 
