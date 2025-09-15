@@ -1,9 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import { useState, useEffect } from "react";
 import Header from "./Header";
 import Login from "./Login";
 import Register from "./Register";
-import { getCookie } from "./csrf";
+import Menu from "./Menu";
+import Players from "./Players";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -24,38 +26,23 @@ export default function App() {
     });
     }, []);
 
-  const handleLogout = async () => {
-    await fetch(`${API_URL}/api/logout/`, {
-      method: "POST",
-      credentials: "include",
-      
-      headers:{
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-        "Accept": "application/json"}
-    });
-    setUser(null);
-  };
-
   return (
     <Router>
-      <Header user={user} onLogout={handleLogout} />
+      <Header user={user} setUser={setUser}/>
       <main>
         <Routes>
           <Route
             path="/"
-            element={
-              <div>
+            element=
                 {user ? (
-                  <p>Welcome, {user}!</p>
+                  <Menu/>
                 ) : (
                   null
                 )}
-              </div>
-            }
           />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register setUser={setUser} />} />
+          <Route path="/players" element={<Players />} />
         </Routes>
       </main>
     </Router>

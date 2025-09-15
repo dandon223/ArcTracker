@@ -43,7 +43,7 @@ main {
   margin: 0 20px;
 }
 
-.registerForm, .loginForm {
+.registerForm, .loginForm, .AddPlayerForm {
   width: 450px;
   margin: 0 auto;
   padding: 20px;
@@ -92,4 +92,33 @@ main {
 
 .loginHeader {
   margin-right: 10px;
+}
+
+.players {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.playersList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 400px;
+}
+
+.playerItem {
+  padding: 10px 15px;
+  min-width: 200px;
+  text-align: center;
+  margin: 8px 0;
+  background-color: #f5f5f5;
+  color: black;
+  border-radius: 6px;
+  font-size: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.playerItem:hover {
+  background-color: #e0e0e0;
 }
