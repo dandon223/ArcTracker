@@ -46,7 +46,7 @@ export default function Players() {
     return  <section className="players">
 
         <div>
-            <h3>Players:</h3>
+            {players.length > 0 && <h3>Players:</h3>}
             <ul className="playersList">{playersList}</ul>
         </div>
         <form className="AddPlayerForm" onSubmit={handleAddPlayer}>
