@@ -18,7 +18,7 @@ export default function Header(props) {
     navigate("/");
   };
     return  <header> 
-                <h3>ArcTracker</h3> 
+                <h3><Link to="/" style={{ textDecoration: "none", color: "inherit" }}>ArcTracker</Link></h3> 
                 <nav>
                 {props.user ? (
                     <>
