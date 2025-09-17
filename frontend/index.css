@@ -52,6 +52,12 @@ main {
   background-color: #f9f9f9;
   font-family: Arial, sans-serif;
 }
+.AddPlayerForm {
+  margin-left: auto;
+  margin-bottom: auto;
+  margin-top: 20px;
+  margin-right: 20px;
+}
 
 .formRow {
   display: flex;
