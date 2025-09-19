@@ -12,11 +12,16 @@ export default function Games() {
     const navigate = useNavigate();
     
 
-    const gamesList = games.map(game => (
-        <li key={game.id} className="gameItem">
-            <h4>{game.name}</h4>
+    const gamesList = games.map((game) => (
+        <li
+        key={game.id}
+        className="gameItem"
+        onClick={() => navigate(`/games/${game.id}`)}
+        style={{ cursor: "pointer" }}
+        >
+        <h4>{game.name}</h4>
         </li>
-    ))
+    ));
 
     useEffect(() => {
         fetch(`${API_URL}/api/players/`, { 
