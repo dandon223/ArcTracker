@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getCookie } from "./csrf";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -8,7 +9,7 @@ export default function Games() {
     const [games, setGames] = useState([]);
     const [name, setName] = useState("")
     const [selectedPlayers, setSelectedPlayers] = useState([]);
-    console.log(selectedPlayers);
+    const navigate = useNavigate();
     
 
     const gamesList = games.map(game => (
@@ -54,6 +55,7 @@ export default function Games() {
         setName("")
         setGames(prev => [...prev, data])
         setSelectedPlayers([])
+        navigate(`/games/${data.id}`);
 
     };
 

@@ -180,7 +180,7 @@ class GameAPIView(BaseAPIView):
             with transaction.atomic():
                 game = serializer.save(user=request.user)
                 prepare_new_game(game)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(GameSerializerGet(game).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
