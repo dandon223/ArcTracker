@@ -43,7 +43,7 @@ main {
   margin: 0 20px;
 }
 
-.registerForm, .loginForm, .AddPlayerForm {
+.registerForm, .loginForm, .AddPlayerForm, .AddGameForm {
   width: 450px;
   margin: 0 auto;
   padding: 20px;
@@ -52,7 +52,7 @@ main {
   background-color: #f9f9f9;
   font-family: Arial, sans-serif;
 }
-.AddPlayerForm {
+.AddPlayerForm, .AddGameForm {
   margin-left: auto;
   margin-bottom: auto;
   margin-top: 20px;
@@ -90,30 +90,27 @@ main {
   font-size: 16px;
   display: inline-block; /* for <a> links to behave like buttons */
   text-align: center;
+  margin-right: 10px;
 }
 
 .button:hover {
   background-color: #45a049;
 }
 
-.loginHeader {
-  margin-right: 10px;
-}
-
-.players {
+.players, .games {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.playersList {
+.playersList, .gamesList {
   list-style: none;
   padding: 0;
   margin: 0;
   max-width: 400px;
 }
 
-.playerItem {
+.playerItem, .gameItem {
   padding: 10px 15px;
   min-width: 200px;
   text-align: center;
@@ -125,7 +122,7 @@ main {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.playerItem:hover {
+.playerItem:hover, .gameItem:hover {
   background-color: #e0e0e0;
 }
 
@@ -156,4 +153,18 @@ main {
   align-items: center;
   justify-content: center;
   z-index: 999;
+}
+
+.playerOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.playerOption input[type="checkbox"] {
+  transform: scale(1.2); /* make checkbox bigger */
+  cursor: pointer;
 }

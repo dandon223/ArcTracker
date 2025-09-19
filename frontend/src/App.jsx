@@ -6,6 +6,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Menu from "./Menu";
 import Players from "./Players";
+import Games from "./Games"
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register setUser={setUser} />} />
           <Route path="/players" element={<Players />} />
+          <Route path="/games" element={<Games />} />
         </Routes>
       </main>
       </>

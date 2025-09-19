@@ -28,7 +28,7 @@ export default function Header(props) {
                     </>
                 ) : (
                     <>
-                    <Link className="button loginHeader" to="/login">Login</Link>
+                    <Link className="button" to="/login">Login</Link>
                     <Link className="button" to="/register">Register</Link>
                     </>
                 )}
