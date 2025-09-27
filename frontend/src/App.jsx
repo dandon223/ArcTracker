@@ -48,7 +48,7 @@ export default function App() {
           <Route path="/register" element={<Register setUser={setUser} />} />
           <Route path="/players" element={<Players />} />
           <Route path="/games" element={<Games />} />
-          <Route path="/games/:id" element={<CurrentGame />} />
+          <Route path="/games/:name" element={<CurrentGame />} />
         </Routes>
       </main>
       </>

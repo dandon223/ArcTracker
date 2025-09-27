@@ -16,7 +16,7 @@ export default function Games() {
         <li
         key={game.id}
         className="gameItem"
-        onClick={() => navigate(`/games/${game.id}`)}
+        onClick={() => navigate(`/games/${game.name}`)}
         style={{ cursor: "pointer" }}
         >
         <h4>{game.name}</h4>
@@ -60,7 +60,7 @@ export default function Games() {
         setName("")
         setGames(prev => [...prev, data])
         setSelectedPlayers([])
-        navigate(`/games/${data.id}`);
+        navigate(`/games/${data.name}`);
 
     };
 
