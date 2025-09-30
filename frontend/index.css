@@ -97,6 +97,12 @@ main {
   background-color: #45a049;
 }
 
+.button.chosen {
+  background-color: #5d2b90; /* highlight color */
+  color: white;
+  border: 2px solid #cbb2ff;
+}
+
 .players, .games {
   display: flex;
   align-items: center;
@@ -193,8 +199,7 @@ main {
   object-fit: cover;  /* adjust image filling */
 }
 
-.action-container {
+.play-options {
   display: flex;
   justify-content: center;
-  gap: 24px;
 }
