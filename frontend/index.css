@@ -110,7 +110,7 @@ main {
   max-width: 400px;
 }
 
-.playerItem, .gameItem {
+.player, .game {
   padding: 10px 15px;
   min-width: 200px;
   text-align: center;
@@ -122,7 +122,7 @@ main {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.playerItem:hover, .gameItem:hover {
+.player:hover, .game:hover {
   background-color: #e0e0e0;
 }
 
@@ -193,3 +193,8 @@ main {
   object-fit: cover;  /* adjust image filling */
 }
 
+.action-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}

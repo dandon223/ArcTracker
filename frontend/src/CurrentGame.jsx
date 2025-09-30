@@ -43,10 +43,22 @@ export default function CurrentGame() {
             <div className="cards-container">
             {cardsElements}
             </div>
-            <h3>Players:</h3>
-            <div className="players-container">
-            {playerElements}
+            <h3>Choose Action:</h3>
+            <div className="action-container">
+                <div className="players-container">
+                    <h4>Players:</h4>
+                    <div>{playerElements}</div>
+                </div>
+                <div>
+                    <h4>Action:</h4>
+                    <div> Play </div>
+                    <div> Add </div>
+                    <div> Retrieve </div>
+                    <div> Reveal </div>
+                    <div> Unreveal </div>
+                </div>
             </div>
+
         </section>
     );
 }

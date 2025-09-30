@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { getCookie } from "./csrf";
+import Player from "./Player"
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Players() {
     const [players, setPlayers] = useState([]);
     const [nick, setNick] = useState("")
-    const playersList = players.map(player => (
-        <li key={player.id} className="playerItem">
-            <h4>{player.nick}</h4>
-        </li>
-    ))
+    const playersList = players.map(player => <Player key={player.id} nick={player.nick} />)
 
     useEffect(() => {
         fetch(`${API_URL}/api/players/`, { 
@@ -47,7 +44,7 @@ export default function Players() {
 
         <div>
             {players.length > 0 && <h3>Players:</h3>}
-            <ul className="playersList">{playersList}</ul>
+            <div className="playersList">{playersList}</div>
         </div>
         <form className="AddPlayerForm" onSubmit={handleAddPlayer}>
             <div className="formRow">

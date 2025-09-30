@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getCookie } from "./csrf";
 import { useNavigate } from "react-router-dom";
+import Game from "./Game";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -9,19 +10,8 @@ export default function Games() {
     const [games, setGames] = useState([]);
     const [name, setName] = useState("")
     const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const gamesList = games.map(game => <Game key={game.id} game={game} />);
     const navigate = useNavigate();
-    
-
-    const gamesList = games.map((game) => (
-        <li
-        key={game.id}
-        className="gameItem"
-        onClick={() => navigate(`/games/${game.name}`)}
-        style={{ cursor: "pointer" }}
-        >
-        <h4>{game.name}</h4>
-        </li>
-    ));
 
     useEffect(() => {
         fetch(`${API_URL}/api/players/`, { 
