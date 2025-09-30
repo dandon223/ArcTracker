@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 const API_URL = import.meta.env.VITE_API_URL;
 import Card from "./Card";
-import Player from "./Player";
 import PlayOptions from "./PlayOptions";
 import PlayCardForm from "./PlayCardForm";
 
@@ -14,34 +13,49 @@ export default function CurrentGame() {
     const { name } = useParams();
     const cardsNotPlayedElements = cards.filter(card => game.cards_not_played?.includes(card.id)).map(card => <Card key={card.id} number={card.number} suit={card.suit}/>)
 
-    const setGameStateFromAPI = async () => {
-        const resGame = await fetch(`${API_URL}/api/games/?name=${encodeURIComponent(name)}`, { 
-            credentials: "include",
-            headers:{"Accept": "application/json"} });
-        const gameData = await resGame.json();
-        setGame(gameData)
+    const setGameStateFromAPI = async (includePlayers = false) => {
+        try {
+            const resGame = await fetch(`${API_URL}/api/games/?name=${encodeURIComponent(name)}`, { 
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            const gameData = await resGame.json();
+            setGame(gameData);
 
-        const resPlayers = await fetch(`${API_URL}/api/players/`, { 
-            credentials: "include",
-            headers:{"Accept": "application/json"} });
-        const playersData = await resPlayers.json();
-        setPlayers(playersData.filter(player => gameData.players.includes(player.id)));
-    }
+            if (includePlayers) {
+            const resPlayers = await fetch(`${API_URL}/api/players/`, { 
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            const playersData = await resPlayers.json();
+            setPlayers(playersData.filter(player => gameData.players.includes(player.id)));
+            }
+        } catch (err) {
+            console.error("Failed to fetch game/players:", err);
+        }
+    };
+
     const setCardsFromAPI = async () => {
-        fetch(`${API_URL}/api/cards/`, { 
-            credentials: "include",
-            headers:{"Accept": "application/json"} })
-            .then((res) => res.json())
-            .then((data) => setCards(data));
-    }
+        try {
+            const res = await fetch(`${API_URL}/api/cards/`, { 
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            const cardsData = await res.json();
+            setCards(cardsData);
+        } catch (err) {
+            console.error("Failed to fetch cards:", err);
+        }
+    };
+
     useEffect(() => {
-        setGameStateFromAPI();
-        setCardsFromAPI()
-      }, []);
+        setGameStateFromAPI(true); // game + players
+        setCardsFromAPI();
+    }, []);
 
     const reloadAfterPlayCard = async () => {
-        setGameStateFromAPI()
-        setSelected(null)
+        await setGameStateFromAPI(); // just game
+        setSelected(null);
     };
 
     return (
