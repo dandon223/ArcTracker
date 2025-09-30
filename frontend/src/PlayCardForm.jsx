@@ -33,7 +33,7 @@ export default function PlayCardForm(props) {
         }
         setSelectedPlayerId(null);
         setCardFaceUpId(null);
-        window.location.reload();
+        props.reloadAfterPlayCard()
 
     };
 
