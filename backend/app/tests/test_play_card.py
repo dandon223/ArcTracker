@@ -113,7 +113,7 @@ class CardPlayedInRoundAPITests(APITestCase):  # type: ignore[misc]
         data_two = {"number_of_cards_face_down": 2}
         response = self.client.post(self.get_card_played_in_round_url(game.id, player_id), data_two)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], f"player {player_id} played card this round")
+        self.assertEqual(response.data["detail"], "player a played card this round")
 
     def test_play_card_post_card_was_already_played(self) -> None:
         game = Game.objects.first()

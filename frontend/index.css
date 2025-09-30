@@ -43,7 +43,7 @@ main {
   margin: 0 20px;
 }
 
-.registerForm, .loginForm, .AddPlayerForm, .AddGameForm {
+.registerForm, .loginForm, .AddPlayerForm, .AddGameForm, .PlayCardForm {
   width: 450px;
   margin: 0 auto;
   padding: 20px;
@@ -52,7 +52,7 @@ main {
   background-color: #f9f9f9;
   font-family: Arial, sans-serif;
 }
-.AddPlayerForm, .AddGameForm {
+.AddPlayerForm, .AddGameForm  {
   margin-left: auto;
   margin-bottom: auto;
   margin-top: 20px;
@@ -202,4 +202,5 @@ main {
 .play-options {
   display: flex;
   justify-content: center;
+  margin-bottom: 15px;
 }

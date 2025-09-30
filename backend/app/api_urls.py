@@ -6,6 +6,7 @@ from .api_views import (
     CardPlayedInRoundAPIView,
     CardRetrievedSerializerAPIView,
     CardRevealedSerializerAPIView,
+    CardsAbleToPlayInRoundAPIView,
     CardUnrevealedSerializerAPIView,
     ChapterCreateAPIView,
     GameAPIView,
@@ -37,6 +38,11 @@ urlpatterns = [
     path("games/<str:game_id>/chapters/create", ChapterCreateAPIView.as_view(), name="create-chapter"),
     path("games/<str:game_id>/chapters/latest", LatestChapterAPIView.as_view(), name="latest-chapter"),
     path("games/<str:game_id>/players/<str:player_id>/hand/play", CardPlayedInRoundAPIView.as_view(), name="play-card"),
+    path(
+        "games/<str:game_id>/players/<str:player_id>/hand/play/cards",
+        CardsAbleToPlayInRoundAPIView.as_view(),
+        name="cards-able-to-play",
+    ),
     path(
         "games/<str:game_id>/players/<str:player_id>/hand/add",
         NumberOfCardsAddedSerializerAPIView.as_view(),

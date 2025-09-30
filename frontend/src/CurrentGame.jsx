@@ -4,13 +4,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 import Card from "./Card";
 import Player from "./Player";
 import PlayOptions from "./PlayOptions";
+import PlayCardForm from "./PlayCardForm";
 
 export default function CurrentGame() {
     const [game, setGame] = useState({});
     const [cards, setCards] = useState([]);
     const [players, setPlayers] = useState([]);
     const cardsElements = cards.filter(card => game.cards_not_played?.includes(card.id)).map(card => <Card key={card.id} number={card.number} suit={card.suit}/>)
-    const playerElements = players.filter(player => game.players?.includes(player.id)).map(player => <Player key={player.id} nick={player.nick}/>)
     const [selected, setSelected] = useState(null);
 
     useEffect(() => {
@@ -34,8 +34,8 @@ export default function CurrentGame() {
             credentials: "include",
             headers:{"Accept": "application/json"} })
             .then((res) => res.json())
-            .then((data) => setPlayers(data));
-      }, []);
+            .then((data) => setPlayers(data.filter(player => game.players?.includes(player.id))));
+      }, [game]);
 
     const { name } = useParams();
     return (
@@ -47,6 +47,7 @@ export default function CurrentGame() {
             </div>
             <h3>Choose Action:</h3>
             <PlayOptions selected={selected} setSelected={setSelected}/>
+            {selected == "Play" && <PlayCardForm game={game} players={players}/>}
         </section>
     );
 }

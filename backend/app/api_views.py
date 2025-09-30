@@ -28,7 +28,7 @@ from .serializers import (
     PlayerSerializerPost,
     RegisterSerializer,
 )
-from .views_logic import get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
+from .views_logic import cards_number_order, get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
 
 
 @ensure_csrf_cookie
@@ -282,7 +282,7 @@ class CardPlayedInRoundAPIView(BaseAPIView):
             assert latest_round is not None
             if CardPlayedInRound.objects.filter(game_round=latest_round, player=player).exists():
                 return Response(
-                    {"detail": f"player {player.id} played card this round"},
+                    {"detail": f"player {player.nick} played card this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             with transaction.atomic():
@@ -303,6 +303,15 @@ class CardPlayedInRoundAPIView(BaseAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CardsAbleToPlayInRoundAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
+        assert isinstance(request.user, auth_models.User)
+        game = self.get_game(request.user, game_id)
+        player = self.get_player(request.user, player_id)
+        serializer = CardSerializerGet(get_cards_to_play(game, player), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class CardAPIView(APIView):  # type: ignore[misc]
     def get(self, request: Request) -> Response:
         assert isinstance(request.user, auth_models.User)
@@ -313,7 +322,7 @@ class CardAPIView(APIView):  # type: ignore[misc]
             filters["suit"] = suit
         if number:
             filters["number"] = number
-        cards = Card.objects.filter(**filters)
+        cards = Card.objects.filter(**filters).order_by("suit", cards_number_order)
         if len(cards) == 0:
             return Response({"detail": "no card found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = CardSerializerGet(cards, many=True)
