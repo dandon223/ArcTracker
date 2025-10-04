@@ -27,6 +27,7 @@ from .serializers import (
     PlayerSerializerGet,
     PlayerSerializerPost,
     RegisterSerializer,
+    PlayerHandSerializerGet
 )
 from .views_logic import cards_number_order, get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
 
@@ -311,6 +312,14 @@ class CardsAbleToPlayInRoundAPIView(BaseAPIView):
         serializer = CardSerializerGet(get_cards_to_play(game, player), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class PlayerHandAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
+        assert isinstance(request.user, auth_models.User)
+        game = self.get_game(request.user, game_id)
+        player = self.get_player(request.user, player_id)
+        player_hand = PlayerHand.objects.get(player=player, game=game)
+        serializer = PlayerHandSerializerGet(player_hand)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CardAPIView(APIView):  # type: ignore[misc]
     def get(self, request: Request) -> Response:

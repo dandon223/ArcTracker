@@ -20,6 +20,7 @@ from .api_views import (
     RoundCreateAPIView,
     csrf,
     meAPIView,
+    PlayerHandAPIView,
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     path("games/<str:game_id>/rounds/create", RoundCreateAPIView.as_view(), name="create-round"),
     path("games/<str:game_id>/chapters/create", ChapterCreateAPIView.as_view(), name="create-chapter"),
     path("games/<str:game_id>/chapters/latest", LatestChapterAPIView.as_view(), name="latest-chapter"),
+    path("games/<str:game_id>/players/<str:player_id>/hand", PlayerHandAPIView.as_view(), name="player-hand"),
     path("games/<str:game_id>/players/<str:player_id>/hand/play", CardPlayedInRoundAPIView.as_view(), name="play-card"),
     path(
         "games/<str:game_id>/players/<str:player_id>/hand/play/cards",

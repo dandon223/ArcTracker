@@ -11,7 +11,13 @@ export default function CurrentGame() {
     const [players, setPlayers] = useState([]);
     const [selected, setSelected] = useState(null);
     const { name } = useParams();
-
+    const playerIdToNick = Object.fromEntries(
+        players.map(player => [player.id, player.nick])
+    );
+    const cardIdToCard = Object.fromEntries(
+        cards.map(card => [card.id, card])
+    );   
+    
     const setGameStateFromAPI = async (includePlayers = false) => {
         try {
             const resGame = await fetch(`${API_URL}/api/games/?name=${encodeURIComponent(name)}`, { 
@@ -60,7 +66,7 @@ export default function CurrentGame() {
     return (
         <section className="current-game">
             <h2>CURRENT GAME: {name}</h2>
-            <CardsSection game={game} cards={cards}/>
+            <CardsSection game={game} cards={cards} playerIdToNick={playerIdToNick} cardIdToCard={cardIdToCard}/>
             <h3>Choose Action:</h3>
             <PlayOptions selected={selected} setSelected={setSelected}/>
             {selected == "Play" && <PlayCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
