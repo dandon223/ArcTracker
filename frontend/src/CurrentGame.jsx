@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 const API_URL = import.meta.env.VITE_API_URL;
-import Card from "./Card";
 import PlayOptions from "./PlayOptions";
 import PlayCardForm from "./PlayCardForm";
+import CardsSection from "./CardsSection";
 
 export default function CurrentGame() {
     const [game, setGame] = useState({});
@@ -11,7 +11,6 @@ export default function CurrentGame() {
     const [players, setPlayers] = useState([]);
     const [selected, setSelected] = useState(null);
     const { name } = useParams();
-    const cardsNotPlayedElements = cards.filter(card => game.cards_not_played?.includes(card.id)).map(card => <Card key={card.id} number={card.number} suit={card.suit}/>)
 
     const setGameStateFromAPI = async (includePlayers = false) => {
         try {
@@ -61,10 +60,7 @@ export default function CurrentGame() {
     return (
         <section className="current-game">
             <h2>CURRENT GAME: {name}</h2>
-            <h3>Cards not played:</h3>
-            <div className="cards-container">
-            {cardsNotPlayedElements}
-            </div>
+            <CardsSection game={game} cards={cards}/>
             <h3>Choose Action:</h3>
             <PlayOptions selected={selected} setSelected={setSelected}/>
             {selected == "Play" && <PlayCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
