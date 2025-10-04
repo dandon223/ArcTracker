@@ -5,7 +5,6 @@ import Card from "./Card";
 export default function CardsSection(props) {
     const [playerHands, setPlayerHands] = useState([]);
     const cardsNotPlayedElements = props.cards.filter(card => props.game.cards_not_played?.includes(card.id)).map(card => <Card key={card.id} number={card.number} suit={card.suit}/>)
-    console.log(playerHands);
     const cardsInHandsElements = playerHands.map(playerHand => (
         <div key={playerHand.player}>
             <h3>{props.playerIdToNick[playerHand.player]}</h3>

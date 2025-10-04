@@ -18,7 +18,6 @@ export default function CurrentGame() {
     const cardIdToCard = Object.fromEntries(
         cards.map(card => [card.id, card])
     );
-    console.log(game);
     
     
     const setGameStateFromAPI = async (includePlayers = false) => {
