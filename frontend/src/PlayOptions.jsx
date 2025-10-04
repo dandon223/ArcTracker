@@ -1,6 +1,6 @@
 export default function PlayOptions(props) {
 
-  const options = ["Play", "Add", "Retrieve", "Reveal", "Unreveal"];
+  const options = ["Play", "Add", "Retrieve", "Reveal", "Unreveal", "New Round", "New Chapter"];
 
   return (
     <div className="play-options">

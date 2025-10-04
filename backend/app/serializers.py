@@ -72,10 +72,12 @@ class CardSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
         model = Card
         fields = ["id", "suit", "number"]
 
+
 class PlayerHandSerializerGet(serializers.ModelSerializer):  # type: ignore[misc]
     class Meta:
         model = PlayerHand
         fields = ["id", "player", "cards", "number_of_cards"]
+
 
 class CardSerializerPost(serializers.Serializer):  # type: ignore[misc]
     id = serializers.PrimaryKeyRelatedField(queryset=Card.objects.all())

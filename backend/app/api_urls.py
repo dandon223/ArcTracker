@@ -16,11 +16,11 @@ from .api_views import (
     LogoutAPIView,
     NumberOfCardsAddedSerializerAPIView,
     PlayerAPIView,
+    PlayerHandAPIView,
     RegisterAPIView,
     RoundCreateAPIView,
     csrf,
     meAPIView,
-    PlayerHandAPIView,
 )
 
 urlpatterns = [

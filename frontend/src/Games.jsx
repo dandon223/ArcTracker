@@ -44,8 +44,8 @@ export default function Games() {
         });
         const data = await response.json();
         if (!response.ok) {
-        alert(data.detail);
-        return
+            alert(data.detail);
+            return
         }
         setName("")
         setGames(prev => [...prev, data])

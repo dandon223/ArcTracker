@@ -24,12 +24,12 @@ from .serializers import (
     GameSerializerGet,
     GameSerializerPost,
     NumberOfCardsAddedSerializerPost,
+    PlayerHandSerializerGet,
     PlayerSerializerGet,
     PlayerSerializerPost,
     RegisterSerializer,
-    PlayerHandSerializerGet
 )
-from .views_logic import cards_number_order, get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
+from .views_logic import assign_cards, cards_number_order, get_cards_to_play, get_cards_to_retrieve, get_cards_to_reveal
 
 
 @ensure_csrf_cookie
@@ -226,8 +226,14 @@ class ChapterCreateAPIView(BaseAPIView):
         for player_hand in player_hands:
             if player_hand.number_of_cards != 0:
                 return Response({"detail": "not all players have 0 cards"}, status=status.HTTP_400_BAD_REQUEST)
+        for player_hand in player_hands:
+            player_hand.cards.set([])
+            player_hand.number_of_cards = 6
+            player_hand.save()
         game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter + 1, round=1)
         game_round.save()
+        assign_cards(game)
+        game.save()
         serializer = GameRoundSerializerGet(game_round)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -295,6 +301,17 @@ class CardPlayedInRoundAPIView(BaseAPIView):
                             {"detail": f"card {card_played.card_face_up.id} was already played face up"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
+                    if card_played.number_of_cards_face_down + 1 > player_hand.number_of_cards:
+                        return Response(
+                            {"detail": f"player {player.nick} does not have so many cards to play"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                elif card_played.number_of_cards_face_down > player_hand.number_of_cards:
+                    return Response(
+                        {"detail": f"player {player.nick} does not have so many cards to play"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if card_played.card_face_up:
                     player_hand.number_of_cards -= 1
                     game.cards_not_played.remove(card_played.card_face_up)
                     game.save()
@@ -312,6 +329,7 @@ class CardsAbleToPlayInRoundAPIView(BaseAPIView):
         serializer = CardSerializerGet(get_cards_to_play(game, player), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class PlayerHandAPIView(BaseAPIView):
     def get(self, request: Request, game_id: uuid.UUID, player_id: uuid.UUID) -> Response:
         assert isinstance(request.user, auth_models.User)
@@ -320,6 +338,7 @@ class PlayerHandAPIView(BaseAPIView):
         player_hand = PlayerHand.objects.get(player=player, game=game)
         serializer = PlayerHandSerializerGet(player_hand)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class CardAPIView(APIView):  # type: ignore[misc]
     def get(self, request: Request) -> Response:
