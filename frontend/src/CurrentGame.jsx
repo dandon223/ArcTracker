@@ -7,10 +7,11 @@ import PlayCardForm from "./PlayCardForm";
 import CardsSection from "./CardsSection";
 
 export default function CurrentGame() {
-    const [game, setGame] = useState({});
+    const [game, setGame] = useState(null);
     const [cards, setCards] = useState([]);
     const [players, setPlayers] = useState([]);
     const [selected, setSelected] = useState(null);
+    const [currentChapter, setCurrentChapter] = useState(null);
     const { name } = useParams();
     const playerIdToNick = Object.fromEntries(
         players.map(player => [player.id, player.nick])
@@ -37,6 +38,7 @@ export default function CurrentGame() {
             const playersData = await resPlayers.json();
             setPlayers(playersData.filter(player => gameData.players.includes(player.id)));
             }
+            return gameData;
         } catch (err) {
             console.error("Failed to fetch game/players:", err);
         }
@@ -55,7 +57,25 @@ export default function CurrentGame() {
         }
     };
 
+    const setRoundChapterFromAPI = async (game_id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/games/${game_id}/chapters/latest`, { 
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            
+            const chapterData = await res.json();
+            setCurrentChapter(chapterData);
+        } catch (err) {
+            console.error("Failed to fetch current chapter:", err);
+        }
+    };
+
     const setNewRoundFromAPI = async () => {
+        if (!game?.id) {
+            console.error("No game ID yet");
+            return null;
+        }
         try {
             const response = await fetch(`${API_URL}/api/games/${game.id}/rounds/create`, { 
                 credentials: "include",
@@ -70,8 +90,9 @@ export default function CurrentGame() {
             const data = await response.json();
             if (!response.ok) {
                 alert(data.detail);
-                return
-            }
+                return null;
+            }            
+            setCurrentChapter(data)
             
         } catch (err) {
             console.error("Failed to post new round:", err);
@@ -93,8 +114,10 @@ export default function CurrentGame() {
             const data = await response.json();
             if (!response.ok) {
                 alert(data.detail);
-                return
+                return null;
             }
+            setCurrentChapter(data)
+            return data
             
         } catch (err) {
             console.error("Failed to post new chapter:", err);
@@ -102,8 +125,13 @@ export default function CurrentGame() {
     };
 
     useEffect(() => {
-        setGameStateFromAPI(true); // game + players
-        setCardsFromAPI();
+        const run = async () => {
+            setCardsFromAPI()
+            const gameData = await setGameStateFromAPI(true); // game + players
+            if (!gameData) return;
+            setRoundChapterFromAPI(gameData.id)
+        }
+        run();
     }, []);
 
     useEffect(() => {
@@ -116,8 +144,10 @@ export default function CurrentGame() {
         }
         if (selected === "New Chapter") {
             const run = async () => {
-                await setNewChapterFromAPI();
-                await setGameStateFromAPI();
+                const currentChapter = await setNewChapterFromAPI();
+                if (currentChapter){
+                    await setGameStateFromAPI();
+                }
                 setSelected(null);
             };
             run();
@@ -134,6 +164,7 @@ export default function CurrentGame() {
     return (
         <section className="current-game">
             <h2>CURRENT GAME: {name}</h2>
+            {currentChapter && (<h2>Chapter: {currentChapter.chapter} Round: {currentChapter.round}</h2>)}
             <CardsSection game={game} cards={cards} playerIdToNick={playerIdToNick} cardIdToCard={cardIdToCard}/>
             <h3>Choose Action:</h3>
             <PlayOptions selected={selected} setSelected={setSelected}/>

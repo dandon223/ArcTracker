@@ -201,7 +201,10 @@ class RoundCreateAPIView(BaseAPIView):
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         player_hands = PlayerHand.objects.filter(game=game).all()
+        zero_cards = True
         for player_hand in player_hands:
+            if player_hand.number_of_cards != 0:
+                zero_cards = False
             if (
                 player_hand.number_of_cards != 0
                 and not CardPlayedInRound.objects.filter(player=player_hand.player, game_round=latest_round).exists()
@@ -210,6 +213,11 @@ class RoundCreateAPIView(BaseAPIView):
                     {"detail": "not all players that have cards played in this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+        if zero_cards:
+            return Response(
+                {"detail": "no player have card to play"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         game_round = GameRound.objects.create(game=game, chapter=latest_round.chapter, round=latest_round.round + 1)
         game_round.save()
         serializer = GameRoundSerializerGet(game_round)
@@ -292,25 +300,28 @@ class CardPlayedInRoundAPIView(BaseAPIView):
                     {"detail": f"player {player.nick} played card this round"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            validated_data = serializer.validated_data
+            card_face_up = validated_data.get("card_face_up")
+            number_of_cards_face_down = validated_data.get("number_of_cards_face_down", 0)
             with transaction.atomic():
-                card_played = serializer.save(player=player, game_round=latest_round)
-                assert isinstance(card_played, CardPlayedInRound)
-                if card_played.card_face_up:
-                    if card_played.card_face_up not in get_cards_to_play(game, player):
+                if card_face_up:
+                    if card_face_up not in get_cards_to_play(game, player):
                         return Response(
-                            {"detail": f"card {card_played.card_face_up.id} was already played face up"},
+                            {"detail": f"card {card_face_up.id} was already played face up"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                    if card_played.number_of_cards_face_down + 1 > player_hand.number_of_cards:
+                    if number_of_cards_face_down + 1 > player_hand.number_of_cards:
                         return Response(
                             {"detail": f"player {player.nick} does not have so many cards to play"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                elif card_played.number_of_cards_face_down > player_hand.number_of_cards:
+                elif number_of_cards_face_down > player_hand.number_of_cards:
                     return Response(
                         {"detail": f"player {player.nick} does not have so many cards to play"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                card_played = serializer.save(player=player, game_round=latest_round)
+                assert isinstance(card_played, CardPlayedInRound)
                 if card_played.card_face_up:
                     player_hand.number_of_cards -= 1
                     game.cards_not_played.remove(card_played.card_face_up)
