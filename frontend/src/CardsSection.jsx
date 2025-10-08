@@ -4,6 +4,7 @@ import Card from "./Card";
 
 export default function CardsSection(props) {
     const [playerHands, setPlayerHands] = useState([]);
+    const [cardsPlayedByPlayers, setCardsPlayedByPlayers] = useState([]);
     const cardsNotPlayedElements = props.cards.filter(card => props.game?.cards_not_played.includes(card.id)).map(card => <Card key={card.id} number={card.number} suit={card.suit}/>)
     const cardsInHandsElements = playerHands.map(playerHand => (
         <div key={playerHand.player}>
@@ -18,6 +19,28 @@ export default function CardsSection(props) {
             </div>
         </div>
     ))
+    const cardsPlayedByPlayersElements = cardsPlayedByPlayers.map(cardsPlayedByPlayer => (
+        <div key={cardsPlayedByPlayer.player}>
+            <h3>{props.playerIdToNick[cardsPlayedByPlayer.player]}</h3>
+            <div className="cards-container">
+                {cardsPlayedByPlayer.cards.map((roundCards, i) => (
+                    <div key={i} className="round">
+                        <h4>Round {i + 1}</h4>
+                        <div className="round-cards">
+                            {roundCards.map((card, j) => {
+                                if (Object.keys(card).length === 0)
+                                    return <Card key={j} />
+                                else
+                                    return <Card key={card.id} number={props.cardIdToCard[card.id].number} suit={props.cardIdToCard[card.id].suit}  />
+                            }
+                        )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    ))
+    console.log(cardsPlayedByPlayersElements)
 
     const getPlayerHandFromAPI = async (player_id) => {
         try {
@@ -32,6 +55,22 @@ export default function CardsSection(props) {
         }
     };
 
+    const getCardsPlayedByPlayersFromAPI = async () => {
+        if (!props.game?.players) return;
+        try {
+            const res = await fetch(`${API_URL}/api/games/${props.game.id}/cards_history`, { 
+                credentials: "include",
+                headers: { "Accept": "application/json" }
+            });
+            const cardsPlayedByPlayersData = await res.json();
+            setCardsPlayedByPlayers(cardsPlayedByPlayersData)
+            console.log(cardsPlayedByPlayersData);
+            
+        } catch (err) {
+            console.error("Failed to fetch cards played:", err);
+        }
+    };
+
     useEffect(() => {
         const setPlayerHandsFromAPI = async () => {
             if (!props.game?.players) return;
@@ -42,6 +81,7 @@ export default function CardsSection(props) {
         };
         setPlayerHands([]); // clear old hands
         setPlayerHandsFromAPI();
+        getCardsPlayedByPlayersFromAPI();
     }, [props.game]);
   return (
         <>
@@ -49,6 +89,8 @@ export default function CardsSection(props) {
             <div className="cards-container">{cardsNotPlayedElements}</div>
             <h3>Players hand:</h3>
             {cardsInHandsElements}
+            <h3>Cards Played:</h3>
+            {cardsPlayedByPlayersElements}
         </>
   );
 }

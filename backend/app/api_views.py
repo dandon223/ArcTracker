@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import models as auth_models
@@ -253,6 +253,34 @@ class LatestChapterAPIView(BaseAPIView):
         latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
         assert latest_round is not None
         return Response({"chapter": latest_round.chapter, "round": latest_round.round})
+
+
+class CardsHistoryAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID) -> Response:
+        assert isinstance(request.user, auth_models.User)
+        game = self.get_game(request.user, game_id)
+        latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
+        assert latest_round is not None
+        cards_played_in_chapter: List[Dict[str, Any]] = []
+        for player in game.players.all():
+            cards_played_in_chapter.append({"player": player.id, "cards": []})
+            for i in range(1, latest_round.round + 1):
+                cards_played_in_chapter[-1]["cards"].append([])
+                game_round = GameRound.objects.get(game=game, chapter=latest_round.chapter, round=i)
+                if CardPlayedInRound.objects.filter(player=player, game_round=game_round).exists():
+                    card_played_in_round = CardPlayedInRound.objects.filter(player=player, game_round=game_round).get()
+                    if card_played_in_round.card_face_up is not None:
+                        cards_played_in_chapter[-1]["cards"][-1].append(
+                            {
+                                "suit": card_played_in_round.card_face_up.suit,
+                                "number": card_played_in_round.card_face_up.number,
+                                "id": card_played_in_round.card_face_up.id,
+                            }
+                        )
+                    for i in range(0, card_played_in_round.number_of_cards_face_down):
+                        cards_played_in_chapter[-1]["cards"][-1].append({})
+        print("cards_played_in_chapter", cards_played_in_chapter)
+        return Response(cards_played_in_chapter)
 
 
 class CardPlayedInRoundAPIView(BaseAPIView):
