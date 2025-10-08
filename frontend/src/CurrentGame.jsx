@@ -4,6 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 import { getCookie } from "./csrf";
 import PlayOptions from "./PlayOptions";
 import PlayCardForm from "./PlayCardForm";
+import AddCardForm from "./AddCardForm";
 import CardsSection from "./CardsSection";
 
 export default function CurrentGame() {
@@ -169,6 +170,8 @@ export default function CurrentGame() {
             <h3>Choose Action:</h3>
             <PlayOptions selected={selected} setSelected={setSelected}/>
             {selected == "Play" && <PlayCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
+            {selected == "Add" && <AddCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
+
         </section>
     );
 }

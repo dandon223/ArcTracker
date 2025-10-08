@@ -279,7 +279,6 @@ class CardsHistoryAPIView(BaseAPIView):
                         )
                     for i in range(0, card_played_in_round.number_of_cards_face_down):
                         cards_played_in_chapter[-1]["cards"][-1].append({})
-        print("cards_played_in_chapter", cards_played_in_chapter)
         return Response(cards_played_in_chapter)
 
 
@@ -425,6 +424,14 @@ class NumberOfCardsAddedSerializerAPIView(BaseAPIView):
         player_hand = self.get_player_hand(player_id, game)
         serializer = NumberOfCardsAddedSerializerPost(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            if serializer.validated_data["number_of_cards"] < 0:
+                if -serializer.validated_data["number_of_cards"] > player_hand.number_of_cards - len(
+                    player_hand.cards.all()
+                ):
+                    return Response(
+                        {"detail": "player can not remove more cards than it has not known cards"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             player_hand.number_of_cards += serializer.validated_data["number_of_cards"]
             player_hand.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

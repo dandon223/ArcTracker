@@ -40,7 +40,6 @@ export default function CardsSection(props) {
             </div>
         </div>
     ))
-    console.log(cardsPlayedByPlayersElements)
 
     const getPlayerHandFromAPI = async (player_id) => {
         try {
@@ -64,7 +63,6 @@ export default function CardsSection(props) {
             });
             const cardsPlayedByPlayersData = await res.json();
             setCardsPlayedByPlayers(cardsPlayedByPlayersData)
-            console.log(cardsPlayedByPlayersData);
             
         } catch (err) {
             console.error("Failed to fetch cards played:", err);
