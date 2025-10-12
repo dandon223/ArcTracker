@@ -7,6 +7,7 @@ import PlayCardForm from "./PlayCardForm";
 import AddCardForm from "./AddCardForm";
 import CardsSection from "./CardsSection";
 import RetrieveCardForm from "./RetrieveCardForm";
+import RevealCardForm from "./RevealCardForm";
 
 export default function CurrentGame() {
     const [game, setGame] = useState(null);
@@ -173,6 +174,7 @@ export default function CurrentGame() {
             {selected == "Play" && <PlayCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
             {selected == "Add" && <AddCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
             {selected == "Retrieve" && <RetrieveCardForm game={game} players={players} reloadAfterRetrieveCard={reloadAfterPlayCard}/>}
+            {selected == "Reveal" && <RevealCardForm game={game} players={players} cardIdToCard={cardIdToCard} reloadAfterRevealCard={reloadAfterPlayCard}/>}
 
         </section>
     );
