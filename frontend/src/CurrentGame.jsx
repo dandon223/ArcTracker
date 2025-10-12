@@ -8,6 +8,7 @@ import AddCardForm from "./AddCardForm";
 import CardsSection from "./CardsSection";
 import RetrieveCardForm from "./RetrieveCardForm";
 import RevealCardForm from "./RevealCardForm";
+import UnrevealCardForm from "./UnrevealCardForm";
 
 export default function CurrentGame() {
     const [game, setGame] = useState(null);
@@ -175,6 +176,7 @@ export default function CurrentGame() {
             {selected == "Add" && <AddCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
             {selected == "Retrieve" && <RetrieveCardForm game={game} players={players} reloadAfterRetrieveCard={reloadAfterPlayCard}/>}
             {selected == "Reveal" && <RevealCardForm game={game} players={players} cardIdToCard={cardIdToCard} reloadAfterRevealCard={reloadAfterPlayCard}/>}
+            {selected == "Unreveal" && <UnrevealCardForm game={game} players={players} cardIdToCard={cardIdToCard} reloadAfterUnrevealCard={reloadAfterPlayCard}/>}
 
         </section>
     );
