@@ -6,7 +6,13 @@ export default function UnrevealCardForm(props) {
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
     const [cardId, setCardId] = useState(null);
     const [cardsToUnreveal, setCardsToUnreveal] = useState([])
-    
+
+    const numberOrder = [
+    "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX",
+    "SEVEN"
+    ];
+    const suitOrder = ["ADMINISTRATION", "AGGRESSION", "CONSTRUCTION", "MOBILIZATION"];
+
     const handleUnRevealCard = async (e) => {
         e.preventDefault();
 
@@ -44,7 +50,15 @@ export default function UnrevealCardForm(props) {
                     headers: { "Accept": "application/json" }
                 });
                 const playerHandData = await res.json();
-                const cardsToUnreveal = playerHandData.cards.map(card => props.cardIdToCard[card])
+                const cardsToUnreveal = playerHandData.cards
+                    .map(card => props.cardIdToCard[card])
+                    .sort((a, b) => {
+                        // sort by suit first
+                        const suitDiff = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
+                        if (suitDiff !== 0) return suitDiff;
+                        // then by number
+                        return numberOrder.indexOf(a.number) - numberOrder.indexOf(b.number);
+                    })
                 setCardsToUnreveal(cardsToUnreveal)
             } catch (err) {
                 console.error("Failed to fetch cards:", err);

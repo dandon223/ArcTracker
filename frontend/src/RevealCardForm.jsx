@@ -6,6 +6,12 @@ export default function RevealCardForm(props) {
     const [selectedPlayerId, setSelectedPlayerId] = useState(null);
     const [cardId, setCardId] = useState(null);
     const [cardsToReveal, setCardsToReveal] = useState([])
+
+    const numberOrder = [
+    "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX",
+    "SEVEN"
+    ];
+    const suitOrder = ["ADMINISTRATION", "AGGRESSION", "CONSTRUCTION", "MOBILIZATION"];
     
     const handleRevealCard = async (e) => {
         e.preventDefault();
@@ -39,8 +45,17 @@ export default function RevealCardForm(props) {
     useEffect(() => {
         if (!props.game)
             return;        
-        setCardsToReveal([...props.game.cards_not_played].map(card => props.cardIdToCard[card]))
-      }, [props.game]);
+        setCardsToReveal(
+        props.game.cards_not_played
+            .map(card => props.cardIdToCard[card])
+            .sort((a, b) => {
+                // sort by suit first
+                const suitDiff = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
+                if (suitDiff !== 0) return suitDiff;
+                // then by number
+                return numberOrder.indexOf(a.number) - numberOrder.indexOf(b.number);
+            }));      
+    }, [props.game]);
 
     return  <form className="RevealCardForm" onSubmit={handleRevealCard}>
                 <div className="formRow">
