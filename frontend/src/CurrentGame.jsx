@@ -6,6 +6,7 @@ import PlayOptions from "./PlayOptions";
 import PlayCardForm from "./PlayCardForm";
 import AddCardForm from "./AddCardForm";
 import CardsSection from "./CardsSection";
+import RetrieveCardForm from "./RetrieveCardForm";
 
 export default function CurrentGame() {
     const [game, setGame] = useState(null);
@@ -171,6 +172,7 @@ export default function CurrentGame() {
             <PlayOptions selected={selected} setSelected={setSelected}/>
             {selected == "Play" && <PlayCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
             {selected == "Add" && <AddCardForm game={game} players={players} reloadAfterPlayCard={reloadAfterPlayCard}/>}
+            {selected == "Retrieve" && <RetrieveCardForm game={game} players={players} reloadAfterRetrieveCard={reloadAfterPlayCard}/>}
 
         </section>
     );

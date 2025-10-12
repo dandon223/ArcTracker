@@ -43,7 +43,7 @@ main {
   margin: 0 20px;
 }
 
-.registerForm, .loginForm, .AddPlayerForm, .AddGameForm, .PlayCardForm {
+.registerForm, .loginForm, .AddPlayerForm, .AddGameForm, .PlayCardForm, .RetrieveCardForm {
   width: 450px;
   margin: 0 auto;
   padding: 20px;

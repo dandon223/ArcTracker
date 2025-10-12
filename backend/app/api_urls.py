@@ -7,6 +7,7 @@ from .api_views import (
     CardRetrievedSerializerAPIView,
     CardRevealedSerializerAPIView,
     CardsAbleToPlayInRoundAPIView,
+    CardsAbleToRetrieveSerializerAPIView,
     CardsHistoryAPIView,
     CardUnrevealedSerializerAPIView,
     ChapterCreateAPIView,
@@ -56,6 +57,11 @@ urlpatterns = [
         "games/<str:game_id>/players/<str:player_id>/hand/retrieve",
         CardRetrievedSerializerAPIView.as_view(),
         name="retrieve-card",
+    ),
+    path(
+        "games/<str:game_id>/retrieve/cards",
+        CardsAbleToRetrieveSerializerAPIView.as_view(),
+        name="cards-able-to-retrieve",
     ),
     path(
         "games/<str:game_id>/players/<str:player_id>/hand/reveal",

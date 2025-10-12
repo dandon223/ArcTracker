@@ -352,6 +352,7 @@ class CardPlayedInRoundAPIView(BaseAPIView):
                 if card_played.card_face_up:
                     player_hand.number_of_cards -= 1
                     game.cards_not_played.remove(card_played.card_face_up)
+                    player_hand.cards.remove(card_played.card_face_up)
                     game.save()
                 player_hand.number_of_cards -= card_played.number_of_cards_face_down
                 player_hand.save()
@@ -365,6 +366,17 @@ class CardsAbleToPlayInRoundAPIView(BaseAPIView):
         game = self.get_game(request.user, game_id)
         player = self.get_player(request.user, player_id)
         serializer = CardSerializerGet(get_cards_to_play(game, player), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CardsAbleToRetrieveSerializerAPIView(BaseAPIView):
+    def get(self, request: Request, game_id: uuid.UUID) -> Response:
+        assert isinstance(request.user, auth_models.User)
+        game = self.get_game(request.user, game_id)
+        latest_round = GameRound.objects.filter(game=game).order_by("-chapter", "-round").first()
+        assert latest_round is not None
+        cards = get_cards_to_retrieve(game, latest_round.chapter, latest_round.round)
+        serializer = CardSerializerGet(cards, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

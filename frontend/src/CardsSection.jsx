@@ -10,11 +10,12 @@ export default function CardsSection(props) {
         <div key={playerHand.player}>
             <h3>{props.playerIdToNick[playerHand.player]}</h3>
             <div className="cards-container">
-                {[...Array(playerHand.number_of_cards)].map((_, i) => (
+                {
+                [...Array(playerHand.number_of_cards - playerHand.cards.length)].map((_, i) => (
                     <Card key={i} />
                 ))}
                 {playerHand.cards.map((card, i) => (
-                    <Card key={i} number={props.cardIdToCard[card.id].number} suit={props.cardIdToCard[card.id].suit}  />
+                    <Card key={i} number={props.cardIdToCard[card].number} suit={props.cardIdToCard[card].suit}  />
                 ))}
             </div>
         </div>

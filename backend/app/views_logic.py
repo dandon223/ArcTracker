@@ -76,7 +76,10 @@ def get_cards_to_play(game: Game, player: Player) -> QuerySet[Card]:
     player_hand = PlayerHand.objects.get(player=player, game=game)
     player_card_ids = player_hand.cards.values_list("id", flat=True)
     not_played_card_ids = game.cards_not_played.values_list("id", flat=True)
-    card_ids = list(player_card_ids) + list(not_played_card_ids)
+    if player_hand.number_of_cards == len(player_hand.cards.all()):
+        card_ids = list(player_card_ids)
+    else:
+        card_ids = list(player_card_ids) + list(not_played_card_ids)
     return Card.objects.filter(id__in=card_ids).order_by("suit", cards_number_order)
 
 
